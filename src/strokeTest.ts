@@ -1,10 +1,14 @@
-import basicVert from './shaders/position.vert.wgsl?raw';
-import imageTexture from './shaders/imageTexture.frag.wgsl?raw';
+import strokeVert from './shaders/stroke.vert.wgsl?raw'
+import basicFrag from './shaders/red.frag.wgsl?raw'
+
 // initialize webgpu device & config canvas context
 async function initWebGPU(canvas: HTMLCanvasElement) {
-    if (!navigator.gpu)
+    if(!navigator.gpu)
         throw new Error('Not Support WebGPU')
-    const adapter = await navigator.gpu.requestAdapter()
+    const adapter = await navigator.gpu.requestAdapter({
+        powerPreference: 'high-performance'
+        // powerPreference: 'low-power'
+    })
     if (!adapter)
         throw new Error('No Adapter Found')
     const device = await adapter.requestDevice()
@@ -15,125 +19,101 @@ async function initWebGPU(canvas: HTMLCanvasElement) {
     canvas.height = canvas.clientHeight * devicePixelRatio
     const size = {width: canvas.width, height: canvas.height}
     context.configure({
+        // json specific format when key and value are the same
         device, format,
-        // prevent chrome warning after v102
+        // prevent chrome warning
         alphaMode: 'opaque'
     })
-    return { device, context, format, size }
+    return {device, context, format, size}
 }
-
-async function createPipeline(device: GPUDevice, format: GPUTextureFormat) {
-    const pipeline = device.createRenderPipeline({
+// create a simple pipiline
+async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promise<GPURenderPipeline> {
+    const descriptor: GPURenderPipelineDescriptor = {
         layout: 'auto',
         vertex: {
-            module: device.createShaderModule({ code: basicVert }),
-            entryPoint: 'main',
-            buffers: [
-                {
-                    arrayStride: 5 * 4,
-                    attributes: [
-                        { shaderLocation: 0, offset: 0, format: 'float32x3' }, // Position
-                        { shaderLocation: 1, offset: 3 * 4, format: 'float32x2' }, // UV
-                    ],
-                },
-            ],
+            module: device.createShaderModule({
+                code: strokeVert
+            }),
+            entryPoint: 'main'
+        },
+        primitive: {
+            topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
         },
         fragment: {
-            module: device.createShaderModule({ code: imageTexture }),
+            module: device.createShaderModule({
+                code: basicFrag
+            }),
             entryPoint: 'main',
-            targets: [{ format }],
-        },
-        primitive: { topology: 'triangle-strip' },
-        depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' },
-    });
-    return pipeline;
-}
-
-
-function createBrushVertices(x: number, y: number, radius: number) {
-    const halfSize = radius;
-    return new Float32Array([
-        // x, y, z,   u, v
-        x - halfSize, y - halfSize, 0.0, 0.0, 1.0,  // Bottom-left
-        x + halfSize, y - halfSize, 0.0, 1.0, 1.0,  // Bottom-right
-        x - halfSize, y + halfSize, 0.0, 0.0, 0.0,  // Top-left
-        x + halfSize, y + halfSize, 0.0, 1.0, 0.0,  // Top-right
-    ]);
-}
-
-let strokes: Float32Array[] = []; // 存储所有笔触顶点数据
-
-function addBrushStroke(x: number, y: number, radius: number) {
-    const vertices = createBrushVertices(x, y, radius);
-    strokes.push(vertices);
-}
-
-function draw(
-    device: GPUDevice,
-    context: GPUCanvasContext,
-    pipeline: GPURenderPipeline,
-    depthTexture: GPUTexture,
-    vertexBuffer: GPUBuffer
-) {
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = context.getCurrentTexture().createView();
-
-    const renderPass = commandEncoder.beginRenderPass({
-        colorAttachments: [{ view: textureView, loadOp: 'clear', storeOp: 'store', clearValue: { r: 1, g: 1, b: 1, a: 1 } }],
-        depthStencilAttachment: { view: depthTexture.createView(), depthLoadOp: 'clear', depthStoreOp: 'store', depthClearValue: 1.0 },
-    });
-
-    renderPass.setPipeline(pipeline);
-
-    strokes.forEach(strokeVertices => {
-        device.queue.writeBuffer(vertexBuffer, 0, strokeVertices);
-        renderPass.setVertexBuffer(0, vertexBuffer);
-        renderPass.draw(4); // 绘制四边形
-    });
-
-    renderPass.end();
-    device.queue.submit([commandEncoder.finish()]);
-}
-
-async function run() {
-    const canvas = document.querySelector('canvas#webgpu') as HTMLCanvasElement;
-    const { device, context, format } = await initWebGPU(canvas);
-    const pipeline = await createPipeline(device, format);
-
-    const depthTexture = device.createTexture({
-        size: { width: canvas.width, height: canvas.height, depthOrArrayLayers: 1 },
-        format: 'depth24plus',
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-
-    const vertexBuffer = device.createBuffer({
-        size: 4 * 5 * 4, // 4 vertices * (x, y, z, u, v) * 4 bytes per float
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-
-    let isDrawing = false;
-
-    canvas.addEventListener('pointerdown', (e: PointerEvent) => {
-        isDrawing = true;
-        addBrushStroke(e.offsetX, e.offsetY, 10); // Add stroke with a default radius
-    });
-
-    canvas.addEventListener('pointermove', (e: PointerEvent) => {
-        if (isDrawing) {
-            addBrushStroke(e.offsetX, e.offsetY, 10);
+            targets: [
+                {
+                    format: format
+                }
+            ]
         }
-    });
-
-    canvas.addEventListener('pointerup', () => {
-        isDrawing = false;
-    });
-
-    function frame() {
-        draw(device, context, pipeline, depthTexture, vertexBuffer);
-        requestAnimationFrame(frame);
     }
 
-    requestAnimationFrame(frame);
+    // Create the render pipeline
+    const pipeline = await device.createRenderPipelineAsync(descriptor);
+    // create a mvp matrix buffer
+     const mvpBuffer = device.createBuffer({
+        label: 'GPUBuffer store 4x4 matrix',
+        size: 4 * 4 * 4, // 4 x 4 x float32
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
+    // create a uniform group contains matrix
+    const uniformGroup = device.createBindGroup({
+        label: 'Uniform Group with Matrix',
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: mvpBuffer
+                }
+            }
+        ]
+    })
+
+    return await device.createRenderPipelineAsync(descriptor)
+}
+// create & submit device commands
+function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline) {
+    const commandEncoder = device.createCommandEncoder()
+    const view = context.getCurrentTexture().createView()
+    const renderPassDescriptor: GPURenderPassDescriptor = {
+        colorAttachments: [
+            {
+                view: view,
+                clearValue: { r: 1.0, g: 1.0, b: 1.0, a: 1.0 },
+                loadOp: 'clear', // clear/load
+                storeOp: 'store' // store/discard
+            }
+        ]
+    }
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+    passEncoder.setPipeline(pipeline)
+    // 3 vertex form a triangle
+    passEncoder.draw(3)
+    passEncoder.end()
+    // webgpu run in a separate process, all the commands will be executed after submit
+    device.queue.submit([commandEncoder.finish()])
 }
 
-run();
+async function run(){
+    const canvas = document.querySelector('canvas')
+    if (!canvas)
+        throw new Error('No Canvas')
+    const {device, context, format} = await initWebGPU(canvas)
+    const pipeline = await initPipeline(device, format)
+    // start draw
+    draw(device, context, pipeline)
+    
+    // re-configure context on resize
+    window.addEventListener('resize', ()=>{
+        canvas.width = canvas.clientWidth * devicePixelRatio
+        canvas.height = canvas.clientHeight * devicePixelRatio
+        // don't need to recall context.configure() after v104
+        draw(device, context, pipeline)
+    })
+}
+run()
