@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orillusion Webgpu Samples</title>
+    <style>
+        html,
+        body {
+            font-family: Avenir,Helvetica,Arial,sans-serif;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        .menu{
+            width: 200px;
+            height: 100%;
+            border-right: 1px solid #888;
+            overflow: auto;
+            padding: 0 10px;
+        }
+        .menu > a{
+            display: block;
+            margin: 5px 0;
+            color: #045b88;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        a:hover{
+            text-decoration: underline;
+        }
+        a.active{
+            color: red;
+        }
+        iframe{
+            flex-grow: 1;
+            border: none;
+        }
+        .src{
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            height: 40px;
+            width: 40px;
+            background: #fff;
+            text-align: center;
+            font-size: 16px;
+            line-height: 40px;
+            border-radius: 50%;
+            border:none;
+            opacity: 0.6;
+            cursor: pointer;
+            text-decoration: none !important;
+        }
+        .src:hover{
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="menu">
+        <h2>WebGPU Strokes</h2>
+        <!-- <a class="sample" target="canvasTexture">Canvas Texture</a> -->
+        <a class="stroke" target="vanilla">Vanilla</a>
+        <a class="stroke" target="Stamp">Stamp</a>
+        <a class="stroke" target="Air">Air</a>
+    </div>
+    <iframe src="./canvasTexture.html"></iframe>
+    <a class="src" href="https://github.com/Orillusion/orillusion-webgpu-samples/tree/main/src/canvasTexture.ts" target="_blank">&lt; &gt;</a>
+</body>
+</html>
