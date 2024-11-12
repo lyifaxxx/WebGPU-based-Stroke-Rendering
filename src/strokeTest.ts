@@ -127,7 +127,7 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
     passEncoder.setPipeline(pipeline)
     // 3 vertex form a triangle
-    //passEncoder.draw(256)
+    // passEncoder.draw(256)
 
     // bind stroke vertices
     const stroke = new Stroke(device)

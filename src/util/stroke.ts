@@ -16,8 +16,7 @@ export class Stroke {
 
         // Hardcoded indices for a line between the two vertices
         const indices = new Uint16Array([
-            0, 1, // Line from Vertex 1 to Vertex 2
-            0, 2  // Line from Vertex 1 to Vertex 3
+            0, 1, 2 // Line from Vertex 1 to Vertex 2
         ]);
 
         // Create the vertex buffer
