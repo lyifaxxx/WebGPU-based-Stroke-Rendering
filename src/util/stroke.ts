@@ -19,16 +19,28 @@ export class Stroke {
             0// Line from Vertex 1 to Vertex 2
         ]);
 
-        const vertsArray = new Float32Array(4);
-        vertsArray[0] = -0.5;
-        vertsArray[1] = 0.0;
-        vertsArray[2] = 0.5;
-        vertsArray[3] = 0.0;
+        const vertsArraySize = 4 * 4; // 4 vertices for tesing
+        const vertsArray = new Float32Array(vertsArraySize);
+        for(let i = 0; i < vertsArraySize; i++) {
+            if(i % 4 === 0) {
+                vertsArray[i] = -0.5;
+            }
+            if(i % 4 === 1) {
+                vertsArray[i] = 0.0;
+            }
+            if(i % 4 === 2) {
+                vertsArray[i] = 0.5;
+            }
+            if(i % 4 === 3) {
+                vertsArray[i] = 0.0;
+            }
+        }
+
 
         // Create the vertex buffer
         this.vertexBuffer = device.createBuffer({
             label: "vertex buffer",
-            size: 16,
+            size: vertsArray.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);

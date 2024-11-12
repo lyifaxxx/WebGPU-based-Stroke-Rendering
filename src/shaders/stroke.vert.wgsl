@@ -14,18 +14,18 @@ struct VertexOutput {
 };
 
 @vertex
-fn main(in: VertexInput, @builtin(vertex_index) VertexIndex: u32) -> VertexOutput {
+fn main(in:VertexInput,  @builtin(vertex_index) VertexIndex: u32) -> VertexOutput {
 
-    // let position0: vec2<f32> = vec2<f32>(-0.5, -0.5);
-    // let position1: vec2<f32> = vec2<f32>(0.5, 0.5);
+    // let position0: vec2<f32> = vec2<f32>(-0.5, 0.0);
+    // let position1: vec2<f32> = vec2<f32>(0.5, 0.0);
     let position0: vec2<f32> = in.position0;
     let position1: vec2<f32> = in.position1;
     let radius0: f32 = 0.2;
     let radius1: f32 = 0.2;
 
     var output: VertexOutput;
-    output.p0 = in.position0;
-    output.p1 = in.position1;
+    output.p0 = position0;
+    output.p1 = position1;
     output.r0 = radius0;
     output.r1 = radius1;
 
