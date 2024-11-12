@@ -146,8 +146,8 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint32')
 
     // draw stroke
-    //passEncoder.drawIndexed(stroke.numIndices, 1, 0, 0, 0)
-    passEncoder.draw(1) // 1 vert has 2 pos
+    //passEncoder.drawIndexed(stroke.numIndices)
+    passEncoder.draw(4) // 1 vert has 2 pos
 
     passEncoder.end()
     // webgpu run in a separate process, all the commands will be executed after submit
