@@ -167,7 +167,8 @@ async function run(){
 
     // re-configure context on resize
     window.addEventListener('resize', ()=>{
-
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
         // don't need to recall context.configure() after v104
         draw(device, context, pipeline, stroke)
     })
