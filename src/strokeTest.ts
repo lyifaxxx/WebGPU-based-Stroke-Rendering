@@ -50,20 +50,26 @@ export async function initWebGPU() {
 async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promise<GPURenderPipeline> {
     // create vertex buffer layout
     const vertexBufferLayout: GPUVertexBufferLayout = {
-        arrayStride: 3 * 4, // 2 x float32
+        arrayStride: 16, // 2 vec2
         attributes: [
-            {
-                shaderLocation: 0,
-                format: 'float32x2',
-                offset: 0
-            }
+            { // pos0
+                format: "float32x2",
+                offset: 0,
+                shaderLocation: 0
+            },
+            { // pos1
+                format: "float32x2",
+                offset: 8,
+                shaderLocation: 1
+            },
         ]
-    }
+    };
     
     const descriptor: GPURenderPipelineDescriptor = {
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
+                label: 'stroke-vert',
                 code: strokeVert
             }),
             entryPoint: 'main',
@@ -110,6 +116,7 @@ async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promis
     // return { pipeline, uniformGroup, mvpBuffer };
     return await device.createRenderPipelineAsync(descriptor)
 }
+
 // create & submit device commands
 function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline) {
     const commandEncoder = device.createCommandEncoder()
@@ -126,18 +133,17 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     }
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
     passEncoder.setPipeline(pipeline)
-    // 3 vertex form a triangle
-    //passEncoder.draw(256)
 
     // bind stroke vertices
     const stroke = new Stroke(device)
     passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
 
     // bind stroke indices
-    passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint16')
+    passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint32')
 
     // draw stroke
-    passEncoder.drawIndexed(stroke.numIndices, 1, 0, 0, 0)
+    //passEncoder.drawIndexed(stroke.numIndices, 1, 0, 0, 0)
+    passEncoder.draw(1) // 1 vert has 2 pos
 
     passEncoder.end()
     // webgpu run in a separate process, all the commands will be executed after submit
