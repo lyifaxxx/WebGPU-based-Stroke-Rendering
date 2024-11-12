@@ -1,43 +1,76 @@
 import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
+import { Stroke } from './util/stroke'
+
+export var canvas: HTMLCanvasElement;
+export var canvasFormat: GPUTextureFormat;
+export var device: GPUDevice
+export var context: GPUCanvasContext
+export var format: GPUTextureFormat
+export var size: {width: number, height: number}
 
 // initialize webgpu device & config canvas context
-async function initWebGPU(canvas: HTMLCanvasElement) {
-    if(!navigator.gpu)
-        throw new Error('Not Support WebGPU')
-    const adapter = await navigator.gpu.requestAdapter({
-        powerPreference: 'high-performance'
-        // powerPreference: 'low-power'
-    })
-    if (!adapter)
-        throw new Error('No Adapter Found')
-    const device = await adapter.requestDevice()
-    const context = canvas.getContext('webgpu') as GPUCanvasContext
-    const format = navigator.gpu.getPreferredCanvasFormat()
-    const devicePixelRatio = window.devicePixelRatio || 1
-    canvas.width = canvas.clientWidth * devicePixelRatio
-    canvas.height = canvas.clientHeight * devicePixelRatio
-    const size = {width: canvas.width, height: canvas.height}
+export async function initWebGPU() {
+    const canvasElement = document.querySelector('canvas');
+    if (!canvasElement)
+        throw new Error('No Canvas');
+    canvas = canvasElement as HTMLCanvasElement;
+
+    if (!navigator.gpu) {
+        console.error("WebGPU is not supported in this browser.");
+        return;
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+        console.error("Failed to obtain GPU adapter.");
+        return;
+    }
+
+    device = await adapter.requestDevice();
+    console.log("WebGPU initialized with device:", device);
+
+    context = canvas.getContext('webgpu') as GPUCanvasContext;
+    format = navigator.gpu.getPreferredCanvasFormat();
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * devicePixelRatio;
+    canvas.height = canvas.clientHeight * devicePixelRatio;
+    size = {width: canvas.width, height: canvas.height};
     context.configure({
         // json specific format when key and value are the same
         device, format,
         // prevent chrome warning
         alphaMode: 'opaque'
-    })
-    return {device, context, format, size}
+    });
+
+    console.log("WebGPU init successsful");
 }
+
 // create a simple pipiline
 async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promise<GPURenderPipeline> {
+    // create vertex buffer layout
+    const vertexBufferLayout: GPUVertexBufferLayout = {
+        arrayStride: 3 * 4, // 2 x float32
+        attributes: [
+            {
+                shaderLocation: 0,
+                format: 'float32x2',
+                offset: 0
+            }
+        ]
+    }
+    
     const descriptor: GPURenderPipelineDescriptor = {
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
                 code: strokeVert
             }),
-            entryPoint: 'main'
+            entryPoint: 'main',
+            buffers: [vertexBufferLayout]
         },
         primitive: {
-            topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
+            topology: 'line-list' // try point-list, line-list, line-strip, triangle-strip?
         },
         fragment: {
             module: device.createShaderModule({
@@ -92,18 +125,27 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     }
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
     passEncoder.setPipeline(pipeline)
-    // 3 vertex form a triangle
-    passEncoder.draw(3)
+
+    // bind stroke vertices
+    const stroke = new Stroke(device)
+    passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
+
+    // bind stroke indices
+    passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint16')
+
+    // draw stroke
+    passEncoder.drawIndexed(stroke.numIndices, 1, 0, 0, 0)
+
     passEncoder.end()
     // webgpu run in a separate process, all the commands will be executed after submit
     device.queue.submit([commandEncoder.finish()])
 }
 
+
+
 async function run(){
-    const canvas = document.querySelector('canvas')
-    if (!canvas)
-        throw new Error('No Canvas')
-    const {device, context, format} = await initWebGPU(canvas)
+    await initWebGPU()
+    
     const pipeline = await initPipeline(device, format)
     // start draw
     draw(device, context, pipeline)
