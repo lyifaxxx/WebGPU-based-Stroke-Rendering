@@ -38,6 +38,7 @@ async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promis
         },
         primitive: {
             topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
+            // topology: 'line-strip'
         },
         fragment: {
             module: device.createShaderModule({
@@ -73,7 +74,7 @@ async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promis
             }
         ]
     })
-
+    // return { pipeline, uniformGroup, mvpBuffer };
     return await device.createRenderPipelineAsync(descriptor)
 }
 // create & submit device commands
@@ -93,7 +94,7 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
     passEncoder.setPipeline(pipeline)
     // 3 vertex form a triangle
-    passEncoder.draw(3)
+    passEncoder.draw(256)
     passEncoder.end()
     // webgpu run in a separate process, all the commands will be executed after submit
     device.queue.submit([commandEncoder.finish()])
