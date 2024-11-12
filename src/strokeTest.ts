@@ -1,6 +1,8 @@
 import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
 import { Stroke } from './util/stroke'
+import { Track } from './util/track'
+import { mat4, vec2, vec3 } from "gl-matrix";
 
 export var canvas: HTMLCanvasElement;
 export var canvasFormat: GPUTextureFormat;
@@ -8,10 +10,11 @@ export var device: GPUDevice
 export var context: GPUCanvasContext
 export var format: GPUTextureFormat
 export var size: {width: number, height: number}
+export var trackInstance: Track
 
 // initialize webgpu device & config canvas context
 export async function initWebGPU() {
-    const canvasElement = document.querySelector('canvas');
+    const canvasElement = document.querySelector('#webgpu');
     if (!canvasElement)
         throw new Error('No Canvas');
     canvas = canvasElement as HTMLCanvasElement;
@@ -32,9 +35,8 @@ export async function initWebGPU() {
 
     context = canvas.getContext('webgpu') as GPUCanvasContext;
     format = navigator.gpu.getPreferredCanvasFormat();
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
     size = {width: canvas.width, height: canvas.height};
     context.configure({
         // json specific format when key and value are the same
@@ -118,7 +120,7 @@ async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promis
 }
 
 // create & submit device commands
-function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline) {
+function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline, stroke: Stroke) {
     const commandEncoder = device.createCommandEncoder()
     const view = context.getCurrentTexture().createView()
     const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -135,7 +137,7 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     passEncoder.setPipeline(pipeline)
 
     // bind stroke vertices
-    const stroke = new Stroke(device)
+    //stroke = new Stroke(device, trackInstance.strokeStart, trackInstance.strokeEnd)
     passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
 
     // bind stroke indices
@@ -154,17 +156,29 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
 
 async function run(){
     await initWebGPU()
-    
+
+    // add new stroke
+    const stroke = new Stroke(device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
+
+    // add track class
+    trackInstance = new Track(stroke);
+
     const pipeline = await initPipeline(device, format)
-    // start draw
-    draw(device, context, pipeline)
-    
+
     // re-configure context on resize
     window.addEventListener('resize', ()=>{
-        canvas.width = canvas.clientWidth * devicePixelRatio
-        canvas.height = canvas.clientHeight * devicePixelRatio
+
         // don't need to recall context.configure() after v104
-        draw(device, context, pipeline)
+        draw(device, context, pipeline, stroke)
     })
+    
+    function frame() {
+        // start draw
+        draw(device, context, pipeline, stroke)
+        requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+    
 }
+
 run()
