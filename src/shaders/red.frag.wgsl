@@ -25,7 +25,7 @@ fn main(
     if(pLocal.x < 0.0 && d0 > r0){ discard; } // left corners
     if(pLocal.x > len && d1 > r0){ discard; }// right corners
 
-    return vec4<f32>(p1.x, p1.y, 0.0, 1.0); // 返回黑色并应用透明度
+    return vec4<f32>(0.0, 0.0, 0.0, 1.0); // 返回黑色并应用透明度
 }
 
 // @fragment
