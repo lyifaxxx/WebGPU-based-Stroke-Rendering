@@ -27,6 +27,7 @@ fn main(
 
     let cosTheta = (r0 - r1) / len;
 
+
     if (d0cos < cosTheta && d0 > r0) { discard; }
     if (d1cos > cosTheta && d1 > r1) { discard; }
 
