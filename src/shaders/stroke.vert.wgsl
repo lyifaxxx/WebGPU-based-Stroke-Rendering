@@ -20,8 +20,8 @@ fn main(in:VertexInput,  @builtin(vertex_index) VertexIndex: u32) -> VertexOutpu
 
     let position0: vec2<f32> = in.position0;
     let position1: vec2<f32> = in.position1;
-    let radius0: f32 = 0.2;
-    let radius1: f32 = 0.2;
+    let radius0: f32 = 0.1;
+    let radius1: f32 = 0.1;
 
     var output: VertexOutput;
     output.p0 = position0;
@@ -34,6 +34,7 @@ fn main(in:VertexInput,  @builtin(vertex_index) VertexIndex: u32) -> VertexOutpu
     if (abs(cosTheta) >= 1.0) { // 完全内切的情况，不绘制边缘
         output.valid = 0.0;
     }
+    
     let tangent = normalize(position1 - position0);
     let normal = vec2<f32>(-tangent.y, tangent.x);
     let position = array<vec2<f32>, 4>(
@@ -62,9 +63,12 @@ fn main(in:VertexInput,  @builtin(vertex_index) VertexIndex: u32) -> VertexOutpu
         output.valid = 0.0;
     }
 
+    // let trapzoidVertexPosition = position +
+    //     offsetSign.x * radius * tangent +
+    //     offsetSign.y * radius * normal * normalTanValue;
     let trapzoidVertexPosition = position +
         offsetSign.x * radius * tangent +
-        offsetSign.y * radius * normal * normalTanValue;
+        offsetSign.y * radius * normal;
     
     output.p = trapzoidVertexPosition;
     output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); // 不使用 MVP 矩阵

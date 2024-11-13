@@ -61,30 +61,37 @@ export class Stroke {
         device.queue.writeBuffer(this.indexBuffer, 0, indices);
     }
 
-    updateVertexBuffer() {
+    updateVertexBuffer(scaleFactor: number, offsetX: number, offsetY: number) {
         const vertsArraySize = 4 * 4; // 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
                 vertsArray[i] = this.startPos[0];
+                // console.log("scaleFactorHere:", scaleFactor);
+                // vertsArray[i] = (this.startPos[0] * scaleFactor + offsetX);
+                // console.log("vertsArray[i]:", vertsArray[i]);
             }
             if(i % 4 === 1) {
                 vertsArray[i] = this.startPos[1];
+                // vertsArray[i] = (this.startPos[1] * scaleFactor + offsetY); 
             }
             if(i % 4 === 2) {
                 vertsArray[i] = this.endPos[0];
+                // vertsArray[i] = (this.endPos[0] * scaleFactor + offsetX);
             }
             if(i % 4 === 3) {
                 vertsArray[i] = this.endPos[1];
+                // vertsArray[i] = (this.endPos[1] * scaleFactor + offsetY);
             }
         }
         //console.log("vertsArray", vertsArray);
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
     }
 
-    updateStroke(startPos: vec2, endPos: vec2) {
+    updateStroke(startPos: vec2, endPos: vec2, scaleFactor: number, offsetX: number, offsetY: number) {
         this.startPos = startPos;
         this.endPos = endPos;
-        this.updateVertexBuffer();
+        this.updateVertexBuffer(scaleFactor, offsetX, offsetY);
     }
+
 }

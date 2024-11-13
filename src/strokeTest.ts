@@ -15,6 +15,7 @@ export var trackInstance: Track
 // initialize webgpu device & config canvas context
 export async function initWebGPU() {
     const canvasElement = document.querySelector('#webgpu');
+    // const canvasElement = document.querySelector('canvas');
     if (!canvasElement)
         throw new Error('No Canvas');
     canvas = canvasElement as HTMLCanvasElement;
@@ -120,7 +121,7 @@ async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promis
 }
 
 // create & submit device commands
-function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline, stroke: Stroke) {
+function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline, stroke: Stroke, track: Track) {
     const commandEncoder = device.createCommandEncoder()
     const view = context.getCurrentTexture().createView()
     const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -135,10 +136,7 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     }
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
     passEncoder.setPipeline(pipeline)
-
-    // 3 vertex form a triangle
-    // passEncoder.draw(256)
-
+    // stroke.applyTransform(track.scaleFactor, track.offsetX, track.offsetY);
 
     // bind stroke vertices
     //stroke = new Stroke(device, trackInstance.strokeStart, trackInstance.strokeEnd)
@@ -156,8 +154,6 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
     device.queue.submit([commandEncoder.finish()])
 }
 
-
-
 async function run(){
     await initWebGPU()
 
@@ -172,14 +168,14 @@ async function run(){
     // re-configure context on resize
     window.addEventListener('resize', ()=>{
         canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+        canvas.height = canvas.clientHeight;        
         // don't need to recall context.configure() after v104
-        draw(device, context, pipeline, stroke)
+        draw(device, context, pipeline, stroke, trackInstance)
     })
     
     function frame() {
         // start draw
-        draw(device, context, pipeline, stroke)
+        draw(device, context, pipeline, stroke, trackInstance)
         requestAnimationFrame(frame)
     }
     requestAnimationFrame(frame)
