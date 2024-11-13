@@ -11,6 +11,7 @@ export var context: GPUCanvasContext
 export var format: GPUTextureFormat
 export var size: {width: number, height: number}
 export var trackInstance: Track
+var uniformGroup: GPUBindGroup
 
 // initialize webgpu device & config canvas context
 export async function initWebGPU() {
@@ -50,74 +51,64 @@ export async function initWebGPU() {
 }
 
 // create a simple pipiline
-async function initPipeline(device: GPUDevice, format: GPUTextureFormat): Promise<GPURenderPipeline> {
+function initPipeline(device: GPUDevice, format: GPUTextureFormat, stroke: Stroke): GPURenderPipeline {
     // create vertex buffer layout
     const vertexBufferLayout: GPUVertexBufferLayout = {
-        arrayStride: 16, // 2 vec2
+        arrayStride: 16, // 16 * maxNumStrokes
         attributes: [
-            { // pos0
-                format: "float32x2",
+            { // pos
+                format: "float32x4",
                 offset: 0,
                 shaderLocation: 0
-            },
-            { // pos1
-                format: "float32x2",
-                offset: 8,
-                shaderLocation: 1
-            },
+            }
         ]
     };
-    
-    const descriptor: GPURenderPipelineDescriptor = {
-        layout: 'auto',
-        vertex: {
-            module: device.createShaderModule({
-                label: 'stroke-vert',
-                code: strokeVert
-            }),
-            entryPoint: 'main',
-            buffers: [vertexBufferLayout]
-        },
-        primitive: {
-            topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
-            // topology: 'line-strip'
-        },
-        fragment: {
-            module: device.createShaderModule({
-                code: basicFrag
-            }),
-            entryPoint: 'main',
-            targets: [
-                {
-                    format: format
-                }
-            ]
-        }
-    }
 
     // Create the render pipeline
-    const pipeline = await device.createRenderPipelineAsync(descriptor);
-    // create a mvp matrix buffer
-     const mvpBuffer = device.createBuffer({
-        label: 'GPUBuffer store 4x4 matrix',
-        size: 4 * 4 * 4, // 4 x 4 x float32
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    })
+    const pipeline = device.createRenderPipeline(
+        {
+            layout: 'auto',
+            vertex: {
+                module: device.createShaderModule({
+                    label: 'stroke-vert',
+                    code: strokeVert
+                }),
+                entryPoint: 'main',
+            },
+            primitive: {
+                topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
+                // topology: 'line-strip'
+            },
+            fragment: {
+                module: device.createShaderModule({
+                    code: basicFrag
+                }),
+                entryPoint: 'main',
+                targets: [
+                    {
+                        format: format
+                    }
+                ]
+            }
+        }
+    );
+
     // create a uniform group contains matrix
-    const uniformGroup = device.createBindGroup({
-        label: 'Uniform Group with Matrix',
+    uniformGroup = device.createBindGroup({
+        label: 'UniformGroup',
         layout: pipeline.getBindGroupLayout(0),
         entries: [
             {
                 binding: 0,
                 resource: {
-                    buffer: mvpBuffer
+                    buffer: stroke.vertexBuffer
                 }
             }
         ]
     })
+
     // return { pipeline, uniformGroup, mvpBuffer };
-    return await device.createRenderPipelineAsync(descriptor)
+    return pipeline;
 }
 
 // create & submit device commands
@@ -140,14 +131,16 @@ function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderP
 
     // bind stroke vertices
     //stroke = new Stroke(device, trackInstance.strokeStart, trackInstance.strokeEnd)
-    passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
+    //passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
+    passEncoder.setBindGroup(0, uniformGroup)
 
     // bind stroke indices
-    passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint32')
+    //passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint32')
 
     // draw stroke
     //passEncoder.drawIndexed(stroke.numIndices)
-    passEncoder.draw(4) // 1 vert has 2 pos
+    //passEncoder.draw(4) // 1 vert has 2 pos
+    passEncoder.drawIndirect(stroke.indirectBuffer, 0)
 
     passEncoder.end()
     // webgpu run in a separate process, all the commands will be executed after submit
@@ -163,7 +156,7 @@ async function run(){
     // add track class
     trackInstance = new Track(stroke);
 
-    const pipeline = await initPipeline(device, format)
+    const pipeline = initPipeline(device, format, stroke)
 
     // re-configure context on resize
     window.addEventListener('resize', ()=>{

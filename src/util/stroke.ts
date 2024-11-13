@@ -9,6 +9,9 @@ export class Stroke {
     startPos: vec2 = vec2.create();
     endPos: vec2 = vec2.create();
 
+    indirectBuffer: GPUBuffer;
+    numInstances = 0;
+    maxStrokes = 100;
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
@@ -48,8 +51,8 @@ export class Stroke {
         // Create the vertex buffer
         this.vertexBuffer = device.createBuffer({
             label: "vertex buffer",
-            size: vertsArray.byteLength,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            size: vertsArray.byteLength * this.maxStrokes,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
         });
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
 
@@ -59,6 +62,16 @@ export class Stroke {
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
         device.queue.writeBuffer(this.indexBuffer, 0, indices);
+
+        // Create the indirect buffer
+        this.indirectBuffer = device.createBuffer({
+            size: 4 * 4, // 4 x 4 bytes
+            usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+        })
+    
+        const indirectArray = new Uint32Array([4, 0, 0, 0])
+    
+        device.queue.writeBuffer(this.indirectBuffer, 0, indirectArray)
     }
 
     updateVertexBuffer(scaleFactor: number, offsetX: number, offsetY: number) {
@@ -85,7 +98,8 @@ export class Stroke {
             }
         }
         //console.log("vertsArray", vertsArray);
-        device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
+        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * 16, vertsArray);
+        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
     }
 
     updateStroke(startPos: vec2, endPos: vec2, scaleFactor: number, offsetX: number, offsetY: number) {

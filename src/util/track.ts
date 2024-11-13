@@ -62,6 +62,7 @@ export class Track {
             this.startY = evt.clientY - this.offsetY;
             canvas.style.cursor = 'grabbing';
         }else{
+            this.stroke.numInstances++;
             this.isPanning = false;
             this.isDown = true;
             console.log("is down true: ", this.isDown);
@@ -79,6 +80,7 @@ export class Track {
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
         // Create a new stroke object
         //this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
+        
         this.stroke.updateStroke(this.strokeStart, this.strokeEnd, this.scaleFactor, this.offsetX, this.offsetY);
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
     }

@@ -1,8 +1,11 @@
-struct VertexInput {
-    // The position of polyline vertices v_i and v_{i+1}
-    @location(0) position0: vec2<f32>,
-    @location(1) position1: vec2<f32>,
-}
+
+struct StrokeData {
+    positions: vec4<f32>
+};
+
+@group(0) @binding(0)
+var<storage, read> strokes: array<StrokeData>;
+
 
 struct VertexOutput {
     // Output values to the fragment shader, `p` will be the current world position of a pixel. 
@@ -16,12 +19,13 @@ struct VertexOutput {
 };
 
 @vertex
-fn main(in:VertexInput,  @builtin(vertex_index) VertexIndex: u32) -> VertexOutput {
+fn main(@builtin(vertex_index) VertexIndex: u32, 
+@builtin(instance_index) in_instance_index: u32) -> VertexOutput {
 
-    let position0: vec2<f32> = in.position0;
-    let position1: vec2<f32> = in.position1;
-    let radius0: f32 = 0.1;
-    let radius1: f32 = 0.1;
+    let position0: vec2<f32> = strokes[in_instance_index].positions.xy;
+    let position1: vec2<f32> = strokes[in_instance_index].positions.zw;
+    let radius0: f32 = 0.05;
+    let radius1: f32 = 0.05;
 
     var output: VertexOutput;
     output.p0 = position0;
