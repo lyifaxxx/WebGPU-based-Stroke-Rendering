@@ -1,5 +1,6 @@
 import { device } from '../strokeTest';
 import { mat4, vec2, vec3 } from "gl-matrix";
+import { vertex } from './cube';
 
 
 export class Stroke {
@@ -10,8 +11,9 @@ export class Stroke {
     endPos: vec2 = vec2.create();
 
     indirectBuffer: GPUBuffer;
-    numInstances = 0;
-    maxStrokes = 100;
+    numInstances = 0; // change from stokes to polyline
+    maxStrokes = 10000;
+    radius = 0.01;
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
@@ -74,38 +76,56 @@ export class Stroke {
         device.queue.writeBuffer(this.indirectBuffer, 0, indirectArray)
     }
 
-    updateVertexBuffer(scaleFactor: number, offsetX: number, offsetY: number) {
-        const vertsArraySize = 4 * 4; // 4 vertices for tesing
+    updateVertexBuffer() {
+        const vertsArraySize = 4 * 4; // 4 * 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
                 vertsArray[i] = this.startPos[0];
-                // console.log("scaleFactorHere:", scaleFactor);
-                // vertsArray[i] = (this.startPos[0] * scaleFactor + offsetX);
-                // console.log("vertsArray[i]:", vertsArray[i]);
             }
             if(i % 4 === 1) {
                 vertsArray[i] = this.startPos[1];
-                // vertsArray[i] = (this.startPos[1] * scaleFactor + offsetY); 
             }
             if(i % 4 === 2) {
                 vertsArray[i] = this.endPos[0];
-                // vertsArray[i] = (this.endPos[0] * scaleFactor + offsetX);
             }
             if(i % 4 === 3) {
                 vertsArray[i] = this.endPos[1];
-                // vertsArray[i] = (this.endPos[1] * scaleFactor + offsetY);
             }
         }
-        //console.log("vertsArray", vertsArray);
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * 16, vertsArray);
         device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
     }
 
-    updateStroke(startPos: vec2, endPos: vec2, scaleFactor: number, offsetX: number, offsetY: number) {
+    updateVerticesBuffer() {
+        const vertsArraySize = 4 * 4; // 4 vertices for testing
+        const vertsArray = new Float32Array(vertsArraySize);
+    
+        for (let i = 0; i < vertsArraySize; i++) {
+            if (i % 4 === 0) vertsArray[i] = this.startPos[0];
+            if (i % 4 === 1) vertsArray[i] = this.startPos[1];
+            if (i % 4 === 2) vertsArray[i] = this.endPos[0];
+            if (i % 4 === 3) vertsArray[i] = this.endPos[1];
+        }
+    
+        const byteOffset = (this.numInstances - 1) * vertsArray.byteLength;
+    
+        // Validate offset
+        if (byteOffset + vertsArray.byteLength > this.vertexBuffer.size) {
+            console.error(`Vertex buffer overflow: ByteOffset ${byteOffset} exceeds buffer size ${this.vertexBuffer.size}`);
+            return;
+        }
+    
+        device.queue.writeBuffer(this.vertexBuffer, byteOffset, vertsArray);
+        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
+    }
+
+
+    updateStroke(startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
         this.endPos = endPos;
-        this.updateVertexBuffer(scaleFactor, offsetX, offsetY);
+        this.updateVertexBuffer();
+        // this.updateVertexBufferByPath(path);
     }
 
 }

@@ -22,25 +22,19 @@ fn main(
     let pLocal = vec2<f32>(dot(p - p0, tangent), dot(p - p0, normal));
     let d0 = distance(p, p0);
     let d1 = distance(p, p1);
-    let d0cos = pLocal.x / d0;
-    let d1cos = (pLocal.x - len) / d1;
-
-//    let cosTheta = (r0 - r1) / len; //radius no change for now
-//    if (d0cos < cosTheta && d0 > r0) { discard; }
-//    if (d1cos > cosTheta && d1 > r1) { discard; }
-//    if (d0cos < cosTheta && d0 > r0) { return vec4<f32>(1.0, 0.0, 0.0, 1.0); }
-//    if (d1cos > cosTheta && d1 > r1) { return vec4<f32>(1.0, 0.0, 0.0, 1.0); }
 
     // Remove corners
     if(pLocal.x < 0.0 && d0 > r0){ discard; } // left corners
     if(pLocal.x > len && d1 > r0){ discard; }// right corners
 
-    // var A = 1.0;
-    // if (d0 < r0 && d1 < r1) { discard; }
-    // if (d0 < r0 || d1 < r1) { A = 1.0 - sqrt(1.0 - A); }
-
     return vec4<f32>(0.0, 0.0, 0.0, 1.0); // 返回黑色并应用透明度
 }
+
+// // @fragment
+// // fn main() -> @location(0) vec4<f32> {
+// //     // return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+// //     return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+// // }
 
 // @fragment
 // fn main(
