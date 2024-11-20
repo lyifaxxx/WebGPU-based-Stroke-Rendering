@@ -79,7 +79,7 @@ export class Stroke {
     }
 
     updateVertexBuffer() {
-        const vertsArraySize = 4 * 4; // 4 * 4 vertices for tesing
+        const vertsArraySize = constants.StrokeVertexSize; // 4 * 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
@@ -106,7 +106,7 @@ export class Stroke {
     }
 
     updateVerticesBuffer() {
-        const vertsArraySize = 4 * 4; // 4 vertices for testing
+        const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for testing
         const vertsArray = new Float32Array(vertsArraySize);
     
         for (let i = 0; i < vertsArraySize; i++) {
