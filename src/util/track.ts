@@ -1,5 +1,5 @@
 import { mat4, vec2, vec3 } from "gl-matrix";
-import { device, canvas } from '../strokeTest';
+import { device, canvas } from '../renderer';
 import { Stroke } from "./stroke";
 
 // This class is used to track mouse position and create vertex data
@@ -100,7 +100,6 @@ export class Track {
             this.polyline.push(newStroke);
        }
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
-       
     }
 
     private onMouseUp(evt: MouseEvent) {
@@ -129,7 +128,6 @@ export class Track {
         // console.log("polyline: ", this.polyline);
         this.polyline = [];
     }
-
     onFrame() {
 
     }

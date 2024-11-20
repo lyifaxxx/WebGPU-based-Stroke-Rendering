@@ -32,6 +32,7 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     let l0: f32 = 0.0;
     let l1: f32 = 0.0;
 
+
     var output: VertexOutput;
     output.p0 = position0;
     output.p1 = position1;

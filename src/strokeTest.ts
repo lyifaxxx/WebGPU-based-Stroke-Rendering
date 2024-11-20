@@ -3,172 +3,126 @@ import basicFrag from './shaders/red.frag.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3 } from "gl-matrix";
+import * as renderer from './renderer';
 
-export var canvas: HTMLCanvasElement;
-export var canvasFormat: GPUTextureFormat;
-export var device: GPUDevice
-export var context: GPUCanvasContext
-export var format: GPUTextureFormat
-export var size: {width: number, height: number}
-export var trackInstance: Track
-var uniformGroup: GPUBindGroup
 
-// initialize webgpu device & config canvas context
-export async function initWebGPU() {
-    const canvasElement = document.querySelector('#webgpu');
-    // const canvasElement = document.querySelector('canvas');
-    if (!canvasElement)
-        throw new Error('No Canvas');
-    canvas = canvasElement as HTMLCanvasElement;
 
-    if (!navigator.gpu) {
-        console.error("WebGPU is not supported in this browser.");
-        return;
-    }
+export class StrokeRenderer extends renderer.Renderer {
+    pipeline: GPURenderPipeline;
+    //uniformsBindGroupLayout: GPUBindGroupLayout;
+    uniformsBindGroup: GPUBindGroup;
 
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) {
-        console.error("Failed to obtain GPU adapter.");
-        return;
-    }
+    constructor(stroke: Stroke, track: Track) {
+        super(stroke, track);
 
-    device = await adapter.requestDevice();
-    console.log("WebGPU initialized with device:", device);
+        // this.uniformsBindGroupLayout = renderer.device.createBindGroupLayout({
+        //     entries: [
+        //         {
+        //             // p0 + p1, 2 vec2
+        //             binding: 0,
+        //             visibility: GPUShaderStage.VERTEX,
+        //             buffer: {
+        //                 type: 'uniform'
+        //             }
+        //         }
+        //     ]
+        // })
 
-    context = canvas.getContext('webgpu') as GPUCanvasContext;
-    format = navigator.gpu.getPreferredCanvasFormat();
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-    size = {width: canvas.width, height: canvas.height};
-    context.configure({
-        // json specific format when key and value are the same
-        device, format,
-        // prevent chrome warning
-        alphaMode: 'opaque'
-    });
-
-    console.log("WebGPU init successsful");
-}
-
-// create a simple pipiline
-function initPipeline(device: GPUDevice, format: GPUTextureFormat, stroke: Stroke): GPURenderPipeline {
-    // create vertex buffer layout
-    const vertexBufferLayout: GPUVertexBufferLayout = {
-        arrayStride: 16, // 16 * maxNumStrokes
-        attributes: [
-            { // pos
-                format: "float32x4",
-                offset: 0,
-                shaderLocation: 0
-            }
-        ]
-    };
-
-    // Create the render pipeline
-    const pipeline = device.createRenderPipeline(
-        {
-            layout: 'auto',
-            vertex: {
-                module: device.createShaderModule({
-                    label: 'stroke-vert',
-                    code: strokeVert
-                }),
-                entryPoint: 'main',
-            },
-            primitive: {
-                topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
-                // topology: 'line-strip'
-            },
-            fragment: {
-                module: device.createShaderModule({
-                    code: basicFrag
-                }),
-                entryPoint: 'main',
-                targets: [
-                    {
-                        format: format
-                    }
-                ]
-            }
-        }
-    );
-
-    // create a uniform group contains matrix
-    uniformGroup = device.createBindGroup({
-        label: 'UniformGroup',
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
+        this.pipeline = renderer.device.createRenderPipeline(
             {
-                binding: 0,
-                resource: {
-                    buffer: stroke.vertexBuffer
+                label: 'stroke-pipeline',
+                layout:'auto',    
+                vertex: {
+                    module: renderer.device.createShaderModule({
+                        label: 'stroke-vert',
+                        code: strokeVert
+                    }),
+                    entryPoint: 'main',
+                },
+                primitive: {
+                    topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
+                    // topology: 'line-strip'
+                },
+                fragment: {
+                    module: renderer.device.createShaderModule({
+                        code: basicFrag
+                    }),
+                    entryPoint: 'main',
+                    targets: [
+                        {
+                            format: renderer.format
+                        }
+                    ]
                 }
             }
-        ]
-    })
+        );
 
-    // return { pipeline, uniformGroup, mvpBuffer };
-    return pipeline;
-}
+        this.uniformsBindGroup = renderer.device.createBindGroup({
+            label: 'UniformGroup',
+            layout: this.pipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: stroke.vertexBuffer
+                    }
+                }
+            ]
+        })
+    }
 
-// create & submit device commands
-function draw(device: GPUDevice, context: GPUCanvasContext, pipeline: GPURenderPipeline, stroke: Stroke, track: Track) {
-    const commandEncoder = device.createCommandEncoder()
-    const view = context.getCurrentTexture().createView()
-    const renderPassDescriptor: GPURenderPassDescriptor = {
-        colorAttachments: [
+    override draw() {
+        const commandEncoder = renderer.device.createCommandEncoder()
+        const view = renderer.context.getCurrentTexture().createView()
+        const renderPassDescriptor: GPURenderPassDescriptor = {
+            colorAttachments: [
             {
                 view: view,
                 clearValue: { r: 1.0, g: 1.0, b: 1.0, a: 1.0 },
                 loadOp: 'clear', // clear/load
                 storeOp: 'store' // store/discard
             }
-        ]
+            ]
+        }
+        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+        passEncoder.setPipeline(this.pipeline)
+        //passEncoder.setBindGroup(0, this.uniformGroup)
+        passEncoder.setBindGroup(0, this.uniformsBindGroup)
+
+        passEncoder.drawIndirect(this.stroke.indirectBuffer, 0)
+
+        passEncoder.end()
+        // webgpu run in a separate process, all the commands will be executed after submit
+        renderer.device.queue.submit([commandEncoder.finish()])
     }
-    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
-    passEncoder.setPipeline(pipeline)
-    // stroke.applyTransform(track.scaleFactor, track.offsetX, track.offsetY);
-
-    // bind stroke vertices
-    //stroke = new Stroke(device, trackInstance.strokeStart, trackInstance.strokeEnd)
-    //passEncoder.setVertexBuffer(0, stroke.vertexBuffer)
-    passEncoder.setBindGroup(0, uniformGroup)
-
-    // bind stroke indices
-    //passEncoder.setIndexBuffer(stroke.indexBuffer, 'uint32')
-
-    // draw stroke
-    //passEncoder.drawIndexed(stroke.numIndices)
-    //passEncoder.draw(4) // 1 vert has 2 pos
-    passEncoder.drawIndirect(stroke.indirectBuffer, 0)
-
-    passEncoder.end()
-    // webgpu run in a separate process, all the commands will be executed after submit
-    device.queue.submit([commandEncoder.finish()])
 }
 
 async function run(){
-    await initWebGPU()
+
+    await renderer.initWebGPU()
+    const canvas = renderer.canvas;
+    console.log("canvas", canvas)
+    console.log("device", renderer.device)
 
     // add new stroke
-    const stroke = new Stroke(device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
+    const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
 
     // add track class
-    trackInstance = new Track(stroke);
-
-    const pipeline = initPipeline(device, format, stroke)
+    const track = new Track(stroke);
+    var strokeRenderer: StrokeRenderer;
+    strokeRenderer = new StrokeRenderer(stroke, track);
 
     // re-configure context on resize
     window.addEventListener('resize', ()=>{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;        
         // don't need to recall context.configure() after v104
-        draw(device, context, pipeline, stroke, trackInstance)
+        strokeRenderer.draw()
     })
     
     function frame() {
         // start draw
-        draw(device, context, pipeline, stroke, trackInstance)
+        strokeRenderer.draw()
         requestAnimationFrame(frame)
     }
     requestAnimationFrame(frame)
