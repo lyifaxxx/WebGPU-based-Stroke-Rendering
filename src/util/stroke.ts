@@ -1,4 +1,4 @@
-import { device } from '../strokeTest';
+import { device, canvas, constants } from '../renderer';
 import { mat4, vec2, vec3 } from "gl-matrix";
 import { vertex } from './cube';
 
@@ -14,6 +14,7 @@ export class Stroke {
     numInstances = 0; // change from stokes to polyline
     maxStrokes = 10000;
     radius = 0.01;
+
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
@@ -34,8 +35,9 @@ export class Stroke {
             0// Line from Vertex 1 to Vertex 2
         ]);
 
-        const vertsArraySize = 4 * 4; // 4 vertices for tesing
+        const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
+        // TODO: initialze stroke attributes here
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
                 vertsArray[i] = -0.5;
@@ -67,7 +69,7 @@ export class Stroke {
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
-            size: 4 * 4, // 4 x 4 bytes
+            size: constants.numVertPerStroke * 4, // 4 x 4 bytes
             usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         })
     
@@ -82,15 +84,21 @@ export class Stroke {
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
                 vertsArray[i] = this.startPos[0];
+                // console.log("scaleFactorHere:", scaleFactor);
+                // vertsArray[i] = (this.startPos[0] * scaleFactor + offsetX);
+                // console.log("vertsArray[i]:", vertsArray[i]);
             }
             if(i % 4 === 1) {
                 vertsArray[i] = this.startPos[1];
+                // vertsArray[i] = (this.startPos[1] * scaleFactor + offsetY); 
             }
             if(i % 4 === 2) {
                 vertsArray[i] = this.endPos[0];
+                // vertsArray[i] = (this.endPos[0] * scaleFactor + offsetX);
             }
             if(i % 4 === 3) {
                 vertsArray[i] = this.endPos[1];
+                // vertsArray[i] = (this.endPos[1] * scaleFactor + offsetY);
             }
         }
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * 16, vertsArray);
