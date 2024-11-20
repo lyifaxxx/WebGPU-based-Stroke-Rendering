@@ -37,6 +37,7 @@ export class Stroke {
 
         const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
+        // TODO: initialze stroke attributes here
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {
                 vertsArray[i] = -0.5;
@@ -68,7 +69,7 @@ export class Stroke {
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
-            size: 4 * 4, // 4 x 4 bytes
+            size: constants.numVertPerStroke * 4, // 4 x 4 bytes
             usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         })
     

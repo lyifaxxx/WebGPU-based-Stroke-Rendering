@@ -1,6 +1,7 @@
 
 struct StrokeData {
     positions: vec4<f32>
+    // TODO: add more attibutes here
 };
 
 @group(0) @binding(0)

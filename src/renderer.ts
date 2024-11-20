@@ -18,6 +18,7 @@ export const constants = {
 
     // TODO: change this size when adding more attributes to the stroke
     StrokeVertexSize: 4 * 4, // 4 floats(2*vec2 for p0, p1) per vertex
+    numVertPerStroke: 4,
 };
 
 // Initialize WebGPU

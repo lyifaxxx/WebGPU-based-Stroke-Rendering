@@ -9,24 +9,10 @@ import * as renderer from './renderer';
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
-    //uniformsBindGroupLayout: GPUBindGroupLayout;
     uniformsBindGroup: GPUBindGroup;
 
     constructor(stroke: Stroke, track: Track) {
         super(stroke, track);
-
-        // this.uniformsBindGroupLayout = renderer.device.createBindGroupLayout({
-        //     entries: [
-        //         {
-        //             // p0 + p1, 2 vec2
-        //             binding: 0,
-        //             visibility: GPUShaderStage.VERTEX,
-        //             buffer: {
-        //                 type: 'uniform'
-        //             }
-        //         }
-        //     ]
-        // })
 
         this.pipeline = renderer.device.createRenderPipeline(
             {
