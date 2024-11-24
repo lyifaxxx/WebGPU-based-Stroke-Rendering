@@ -6,6 +6,10 @@ import { vertex } from './cube';
 export class Stroke {
     vertexBuffer: GPUBuffer;
     indexBuffer: GPUBuffer;
+
+    // depthTexture: GPUTexture;
+    // depthTextureView: GPUTextureView;
+
     numIndices = 1;
     startPos: vec2 = vec2.create();
     endPos: vec2 = vec2.create();
@@ -27,14 +31,10 @@ export class Stroke {
         ]);
 
         // Hardcoded indices for a line between the two vertices
-
-        // const indices = new Uint16Array([
-        //     0, 1, 2 // Line from Vertex 1 to Vertex 2
-
         const indices = new Uint32Array([
             0// Line from Vertex 1 to Vertex 2
         ]);
-
+        
         const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         // TODO: initialze stroke attributes here
@@ -52,6 +52,7 @@ export class Stroke {
                 vertsArray[i] = 0.0;
             }
         }
+    
         // Create the vertex buffer
         this.vertexBuffer = device.createBuffer({
             label: "vertex buffer",
@@ -62,6 +63,7 @@ export class Stroke {
 
         // Create the index buffer
         this.indexBuffer = device.createBuffer({
+            label: "index buffer",
             size: indices.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
@@ -69,6 +71,7 @@ export class Stroke {
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
+            label: "indirect buffer",
             size: constants.numVertPerStroke * 4, // 4 x 4 bytes
             usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         })
@@ -79,7 +82,7 @@ export class Stroke {
     }
 
     updateVertexBuffer() {
-        const vertsArraySize = 4 * 4; // 4 * 4 vertices for tesing
+        const vertsArraySize = 4 * 4; // 4 * 4 vertices for tesing + l0 and l1
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
             if(i % 4 === 0) {

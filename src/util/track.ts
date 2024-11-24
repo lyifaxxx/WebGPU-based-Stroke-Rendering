@@ -21,6 +21,9 @@ export class Track {
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];
 
+    // Store the lengths of the polyline
+    lengths: number[] = []; 
+
     constructor(stroke: Stroke) {
         this.stroke = stroke;
 
@@ -75,6 +78,9 @@ export class Track {
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device, this.strokeStart, this.strokeStart);
             this.polyline.push(newStroke);
+
+            // initialize the lengths of the polyline
+            this.lengths = [0];
         }
     }
 
@@ -89,7 +95,13 @@ export class Track {
         const currentStroke = this.polyline[this.polyline.length - 1];
     //    if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
         if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.01){
-            console.log("Bigger than 0.01");
+
+            // Update the lengths of the polyline
+            const lastLength = this.lengths[this.lengths.length - 1];
+            const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
+            this.lengths.push(lastLength + segmentLength);
+
+            // console.log("Bigger than 0.01");
             // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
@@ -114,7 +126,12 @@ export class Track {
         const currentStroke = this.polyline[this.polyline.length - 1];
         // if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
         if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.01){
-            console.log("Bigger than 0.01");
+            // Update the lengths of the polyline
+            const lastLength = this.lengths[this.lengths.length - 1];
+            const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
+            this.lengths.push(lastLength + segmentLength);
+
+            // console.log("Bigger than 0.01");
             // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);

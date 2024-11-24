@@ -1,8 +1,5 @@
-// @fragment
-// fn main() -> @location(0) vec4<f32> {
-//     // return vec4<f32>(1.0, 0.0, 0.0, 1.0);
-//     return vec4<f32>(0.0, 0.0, 0.0, 1.0);
-// }
+@group(0) @binding(1) var strokeSampler: sampler;
+@group(0) @binding(2) var strokeTexture: texture_2d<f32>;
 
 @fragment
 fn main(
