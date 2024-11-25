@@ -7,7 +7,7 @@ import { mat4, vec2, vec3 } from "gl-matrix";
 import * as renderer from './renderer';
 // import textureUrl from '../texture.webp?url'
 //import png
-import textureUrl from '../stamp3.png'
+import textureUrl from '../stamp1.png'
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
@@ -23,8 +23,8 @@ export class StrokeRenderer extends renderer.Renderer {
         
         this.strokeTexture = renderer.device.createTexture({
             label: "Initiate texture",
-            // size: [renderer.size.width, renderer.size.height], 
-            size: [512, 512], 
+            size: [renderer.size.width, renderer.size.height], 
+            //size: [512, 512], 
             format: 'rgba8unorm', 
             usage: GPUTextureUsage.TEXTURE_BINDING |  
                    GPUTextureUsage.COPY_SRC |        
@@ -108,7 +108,7 @@ export class StrokeRenderer extends renderer.Renderer {
                 },
                 fragment: {
                     module: renderer.device.createShaderModule({
-                        // code: basicFrag
+                        //code: basicFrag
                         code: stampFrag
                     }),
                     entryPoint: 'main',
