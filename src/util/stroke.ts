@@ -59,7 +59,7 @@ export class Stroke {
             size: vertsArray.byteLength * this.maxStrokes,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
         });
-        device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
+        // device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
 
         // Create the index buffer
         this.indexBuffer = device.createBuffer({

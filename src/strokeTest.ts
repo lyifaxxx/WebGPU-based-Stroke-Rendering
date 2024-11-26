@@ -9,6 +9,7 @@ import * as renderer from './renderer';
 //import png
 import textureUrl from '../stamp1.png'
 
+
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
     uniformsBindGroup: GPUBindGroup;
@@ -17,7 +18,7 @@ export class StrokeRenderer extends renderer.Renderer {
     // Store the stroke texture and its view
     strokeTexture: GPUTexture;
     strokeTextureView: GPUTextureView
-
+    
     constructor(stroke: Stroke, track: Track) {
         super(stroke, track);
         
@@ -148,6 +149,41 @@ export class StrokeRenderer extends renderer.Renderer {
 
     }
 
+     buildPipeline(fragShader: string) {
+        this.pipeline = renderer.device.createRenderPipeline({
+            label: 'stroke-pipeline',
+            layout: renderer.device.createPipelineLayout({
+                label: 'stroke-pipeline-layout',
+                bindGroupLayouts: [this.uniformsBindGroupLayout],
+            }),
+            vertex: {
+                module: renderer.device.createShaderModule({
+                    label: 'stroke-vert',
+                    code: strokeVert,
+                }),
+                entryPoint: 'main',
+            },
+            primitive: {
+                topology: 'triangle-strip',
+            },
+            fragment: {
+                module: renderer.device.createShaderModule({
+                    code: fragShader,
+                }),
+                entryPoint: 'main',
+                targets: [
+                    {
+                        format: renderer.format,
+                        blend: {
+                            color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+                            alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+                        },
+                    },
+                ],
+            },
+        });
+    }
+
     updateBindGroup() {
         this.uniformsBindGroup = renderer.device.createBindGroup({
             label: 'UpdatedUniformsBindGroup',
@@ -265,12 +301,12 @@ async function run(){
         // don't need to recall context.configure() after v104
         strokeRenderer.draw()
     })
-    
+
     function frame() {
         // start draw
         strokeRenderer.draw()
         requestAnimationFrame(frame)
-        console.log("FRAME:stampTexture", strokeRenderer.strokeTexture);
+        // console.log("FRAME:stampTexture", strokeRenderer.strokeTexture);
     }
     requestAnimationFrame(frame)
     
