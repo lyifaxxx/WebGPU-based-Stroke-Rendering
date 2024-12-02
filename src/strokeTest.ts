@@ -326,6 +326,7 @@ async function run(){
         
     });
 
+
     // add eraser checkbox
     var eraser = {value: false}
     gui.add(eraser, 'value').name('Eraser').onChange((value) => {
@@ -335,6 +336,29 @@ async function run(){
             stroke.updateColorBuffer(strokeColor);
         }
     });
+
+    function exportSVG() {
+        const width = renderer.size.width;
+        const height = renderer.size.height;
+
+        // Example SVG content using geometry (customize as needed)
+        const svgContent = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <rect x="10" y="10" width="100" height="50" fill="red" />
+            <circle cx="150" cy="50" r="40" fill="blue" />
+            <!-- Add more shapes based on your scene -->
+        </svg>`;
+
+        // Convert the SVG content to a Blob
+        const blob = new Blob([svgContent], { type: "image/svg+xml" });
+
+        // Create a download link
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "canvas_output.svg";
+        a.click();
+        URL.revokeObjectURL(a.href); // Cleanup
+    }
 
     function handleStrokeSelection(target) {
         let selectedShader;
@@ -397,6 +421,8 @@ async function run(){
     gui.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
     gui.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
     gui.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
+    gui.add({ selectExport: () => exportSVG() }, 'selectExport').name('Export to SVG');
+
 
     function frame() {
         // start draw
