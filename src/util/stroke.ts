@@ -132,7 +132,31 @@ export class Stroke {
         // const colorArray = new Float32Array([color[0], color[1], color[2], 1.0]);
         // device.queue.writeBuffer(this.colorBuffer,  (this.numInstances - 1) * vertsArraySize + 32, colorArray);
         this.strokeColor = vec4.fromValues(color[0], color[1], color[2], 1.0);
-        console.log("colorArray:", this.strokeColor);
+    }
+
+    cleanVertexBuffer(instanceIdx: number) {
+        // set the vertexbuffer at the index to 0
+        const vertsArraySize = constants.StrokeVertexSize;
+        const vertsArray = new Float32Array(vertsArraySize);
+        device.queue.writeBuffer(this.vertexBuffer, instanceIdx * vertsArraySize, vertsArray);
+    }
+
+    // withdraw the last stroke
+    withdrawStroke() {
+        if(this.numInstances === 0) {
+            this.cleanVertexBuffer(0);
+            this.updateVertexBuffer();
+            return;
+        }
+        this.cleanVertexBuffer(this.numInstances-1);
+        console.log("instance number before withdraw:", this.numInstances);
+        this.numInstances -= 10;
+        if(this.numInstances < 0) {
+            this.numInstances = 0;
+            this.cleanVertexBuffer(0);
+        }
+        console.log("instance number after withdraw:", this.numInstances);
+        this.updateVertexBuffer();
     }
 
 }
