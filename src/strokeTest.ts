@@ -1,6 +1,7 @@
 import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
 import stampFrag from './shaders/stamp.frag.wgsl?raw'
+import airFrag from './shaders/air.frag.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3 } from "gl-matrix";
@@ -109,8 +110,10 @@ export class StrokeRenderer extends renderer.Renderer {
                 },
                 fragment: {
                     module: renderer.device.createShaderModule({
-                        //code: basicFrag
-                        code: stampFrag
+                        // code: basicFrag
+                        // code: stampFrag
+                        code: airFrag
+
                     }),
                     entryPoint: 'main',
                     targets: [

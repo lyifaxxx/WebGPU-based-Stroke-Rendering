@@ -94,7 +94,7 @@ export class Track {
         
         const currentStroke = this.polyline[this.polyline.length - 1];
     //    if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.04){
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.00001){
 
             // Update the lengths of the polyline
             const lastLength = this.lengths[this.lengths.length - 1];
@@ -125,7 +125,7 @@ export class Track {
 
         const currentStroke = this.polyline[this.polyline.length - 1];
         // if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.04){
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.00001){
             // Update the lengths of the polyline
             const lastLength = this.lengths[this.lengths.length - 1];
             const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
