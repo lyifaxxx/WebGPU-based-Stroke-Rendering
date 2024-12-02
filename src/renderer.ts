@@ -17,7 +17,7 @@ export const constants = {
     StrokeComputeWorkgroupSize: 128,
 
     // TODO: change this size when adding more attributes to the stroke
-    StrokeVertexSize: 4 * 4, // 4 floats(2*vec2 for p0, p1) per vertex
+    StrokeVertexSize: 4 * 4 + 4 * 4, // 4 floats(2*vec2 for p0, p1) per vertex, 4 floats per stroke color
     numVertPerStroke: 4,
     //TODO: add texture size here
     StrokeTextureSize: 1024,

@@ -10,7 +10,8 @@ fn main(
     @location(4) p: vec2<f32>,
     @location(5) valid: f32,
     @location(6) l0: f32,
-    @location(7) l1: f32
+    @location(7) l1: f32,
+    @location(8) strokeColor: vec4<f32>
 
 ) -> @location(0) vec4<f32> {
     let tangent = normalize(p1 - p0);
@@ -36,7 +37,7 @@ fn main(
     // if (d0 < r0 && d1 < r1) { discard; }
     // if (d0 < r0 || d1 < r1) { A = 1.0 - sqrt(1.0 - A); }
 
-    return vec4<f32>(0.0, 0.0, 0.0, 1.0); // 返回黑色并应用透明度
+    return strokeColor; // 返回黑色并应用透明度
 }
 
 // @fragment

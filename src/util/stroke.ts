@@ -1,11 +1,12 @@
 import { device, canvas, constants } from '../renderer';
-import { mat4, vec2, vec3 } from "gl-matrix";
+import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import { vertex } from './cube';
 
 
 export class Stroke {
     vertexBuffer: GPUBuffer;
     indexBuffer: GPUBuffer;
+    colorBuffer: GPUBuffer;
 
     // depthTexture: GPUTexture;
     // depthTextureView: GPUTextureView;
@@ -19,16 +20,12 @@ export class Stroke {
     maxStrokes = 10000;
     radius = 0.01;
 
+    strokeColor: vec4 = vec4.create();
+
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
         this.endPos = endPos;
-
-        // Hardcoded vertex positions (e.g., 2D positions with (x, y))
-        const vertices = new Float32Array([
-            0.0, 0.0,  // Vertex 1: Position (x, y)
-            -0.5, 0.0, // Vertex 2: Position (x, y)
-        ]);
 
         // Hardcoded indices for a line between the two vertices
         const indices = new Uint32Array([
@@ -37,21 +34,6 @@ export class Stroke {
         
         const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
-        // TODO: initialze stroke attributes here
-        for(let i = 0; i < vertsArraySize; i++) {
-            if(i % 4 === 0) {
-                vertsArray[i] = -0.5;
-            }
-            if(i % 4 === 1) {
-                vertsArray[i] = 0.0;
-            }
-            if(i % 4 === 2) {
-                vertsArray[i] = 0.5;
-            }
-            if(i % 4 === 3) {
-                vertsArray[i] = 0.0;
-            }
-        }
     
         // Create the vertex buffer
         this.vertexBuffer = device.createBuffer({
@@ -59,7 +41,6 @@ export class Stroke {
             size: vertsArray.byteLength * this.maxStrokes,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
         });
-        // device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
 
         // Create the index buffer
         this.indexBuffer = device.createBuffer({
@@ -68,6 +49,15 @@ export class Stroke {
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
         device.queue.writeBuffer(this.indexBuffer, 0, indices);
+
+        // Create the color buffer
+        this.colorBuffer = device.createBuffer({
+            label: "color buffer",
+            size: 4 * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+        });
+        const colorArray = new Float32Array([1.0, 0.0, 0.0, 1.0]);
+        device.queue.writeBuffer(this.colorBuffer, 0, colorArray);
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
@@ -85,49 +75,38 @@ export class Stroke {
         const vertsArraySize = constants.StrokeVertexSize; // 4 * 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
-            if(i % 4 === 0) {
+            if(i % 8 === 0) {
                 vertsArray[i] = this.startPos[0];
                 // console.log("scaleFactorHere:", scaleFactor);
                 // vertsArray[i] = (this.startPos[0] * scaleFactor + offsetX);
                 // console.log("vertsArray[i]:", vertsArray[i]);
             }
-            if(i % 4 === 1) {
+            if(i % 8 === 1) {
                 vertsArray[i] = this.startPos[1];
                 // vertsArray[i] = (this.startPos[1] * scaleFactor + offsetY); 
             }
-            if(i % 4 === 2) {
+            if(i % 8 === 2) {
                 vertsArray[i] = this.endPos[0];
                 // vertsArray[i] = (this.endPos[0] * scaleFactor + offsetX);
             }
-            if(i % 4 === 3) {
+            if(i % 8 === 3) {
                 vertsArray[i] = this.endPos[1];
                 // vertsArray[i] = (this.endPos[1] * scaleFactor + offsetY);
             }
+            if(i % 8 === 4) {
+                vertsArray[i] = this.strokeColor[0];
+            }
+            if(i % 8 === 5) {
+                vertsArray[i] = this.strokeColor[1];
+            }
+            if(i % 8 === 6) {
+                vertsArray[i] = this.strokeColor[2];
+            }
+            if(i % 8 === 7) {
+                vertsArray[i] = this.strokeColor[3];
+            }
         }
-        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * 16, vertsArray);
-        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
-    }
-
-    updateVerticesBuffer() {
-        const vertsArraySize = constants.StrokeVertexSize; // 4 vertices for testing
-        const vertsArray = new Float32Array(vertsArraySize);
-    
-        for (let i = 0; i < vertsArraySize; i++) {
-            if (i % 4 === 0) vertsArray[i] = this.startPos[0];
-            if (i % 4 === 1) vertsArray[i] = this.startPos[1];
-            if (i % 4 === 2) vertsArray[i] = this.endPos[0];
-            if (i % 4 === 3) vertsArray[i] = this.endPos[1];
-        }
-    
-        const byteOffset = (this.numInstances - 1) * vertsArray.byteLength;
-    
-        // Validate offset
-        if (byteOffset + vertsArray.byteLength > this.vertexBuffer.size) {
-            console.error(`Vertex buffer overflow: ByteOffset ${byteOffset} exceeds buffer size ${this.vertexBuffer.size}`);
-            return;
-        }
-    
-        device.queue.writeBuffer(this.vertexBuffer, byteOffset, vertsArray);
+        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * vertsArraySize, vertsArray);
         device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
     }
 
@@ -137,6 +116,15 @@ export class Stroke {
         this.endPos = endPos;
         this.updateVertexBuffer();
         // this.updateVertexBufferByPath(path);
+    }
+
+    // update color buffer
+    updateColorBuffer(color: vec3) {
+        // const vertsArraySize = constants.StrokeVertexSize;
+        // const colorArray = new Float32Array([color[0], color[1], color[2], 1.0]);
+        // device.queue.writeBuffer(this.colorBuffer,  (this.numInstances - 1) * vertsArraySize + 32, colorArray);
+        this.strokeColor = vec4.fromValues(color[0], color[1], color[2], 1.0);
+        console.log("colorArray:", this.strokeColor);
     }
 
 }

@@ -1,3 +1,4 @@
+import {GUI} from 'dat.gui'
 import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
 import stampFrag from './shaders/stamp.frag.wgsl?raw'
@@ -64,6 +65,13 @@ export class StrokeRenderer extends renderer.Renderer {
                     binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: {}
+                },
+                {
+                    binding: 3,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'read-only-storage',
+                    }
                 }
             ]
         });
@@ -87,6 +95,13 @@ export class StrokeRenderer extends renderer.Renderer {
                     // Texture view binding
                     binding: 2,
                     resource: this.strokeTextureView
+                },
+                {
+                    // color buffer
+                    binding: 3,
+                    resource: {
+                        buffer: stroke.colorBuffer
+                    }
                 }
             ]
         })
@@ -110,9 +125,9 @@ export class StrokeRenderer extends renderer.Renderer {
                 },
                 fragment: {
                     module: renderer.device.createShaderModule({
-                        // code: basicFrag
+                        code: basicFrag
                         // code: stampFrag
-                        code: airFrag
+                        //code: airFrag
 
                     }),
                     entryPoint: 'main',
@@ -210,6 +225,13 @@ export class StrokeRenderer extends renderer.Renderer {
                     binding: 2,
                     resource: this.strokeTextureView, // use new texture view
                 },
+                {
+                    // color buffer
+                    binding: 3,
+                    resource: {
+                        buffer: this.stroke.colorBuffer,
+                    },
+                }
             ],
         });
     }
@@ -280,6 +302,9 @@ async function run(){
     // console.log("canvas", canvas)
     // console.log("device", renderer.device)
 
+    // gui
+    const gui = new GUI()
+    
     // add new stroke
     const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
 
@@ -304,6 +329,16 @@ async function run(){
         // don't need to recall context.configure() after v104
         strokeRenderer.draw()
     })
+
+    // add color control
+    var color = {value: [0, 0, 0]}
+    var strokeColor = vec3.fromValues(color.value[0]/255, color.value[1]/255, color.value[2]/255);
+    gui.addColor(color, 'value').onChange((value) => {  
+        strokeColor = vec3.fromValues(value[0]/255, value[1]/255, value[2]/255);
+        console.log("strokeColor", strokeColor);
+        stroke.updateColorBuffer(strokeColor);
+        
+    });
 
     function frame() {
         // start draw
