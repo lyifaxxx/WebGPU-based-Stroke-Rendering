@@ -1,9 +1,10 @@
-
 struct StrokeData {
     positions: vec4<f32>,
     // TODO: add more attibutes here
     // color 
-    strokeColor: vec4<f32>
+    strokeColor: vec4<f32>,
+    // width
+    strokeWidth: f32,
 };
 
 @group(0) @binding(0)
@@ -31,8 +32,8 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
 
     let position0: vec2<f32> = strokes[in_instance_index].positions.xy;
     let position1: vec2<f32> = strokes[in_instance_index].positions.zw;
-    let radius0: f32 = 0.04;
-    let radius1: f32 = 0.04; 
+    let radius0: f32 = strokes[in_instance_index].strokeWidth;
+    let radius1: f32 = strokes[in_instance_index].strokeWidth; 
     let l0: f32 = 0.0;
     let l1: f32 = 0.0;
 

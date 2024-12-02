@@ -80,38 +80,41 @@ export class Stroke {
     }
 
     updateVertexBuffer() {
+        if(this.numInstances === 0) {
+            return;
+        }
         const vertsArraySize = constants.StrokeVertexSize; // 4 * 4 vertices for tesing
         const vertsArray = new Float32Array(vertsArraySize);
         for(let i = 0; i < vertsArraySize; i++) {
-            if(i % 8 === 0) {
+            if(i % 12 === 0) {
                 vertsArray[i] = this.startPos[0];
-                // console.log("scaleFactorHere:", scaleFactor);
-                // vertsArray[i] = (this.startPos[0] * scaleFactor + offsetX);
-                // console.log("vertsArray[i]:", vertsArray[i]);
             }
-            if(i % 8 === 1) {
+            if(i % 12 === 1) {
                 vertsArray[i] = this.startPos[1];
                 // vertsArray[i] = (this.startPos[1] * scaleFactor + offsetY); 
             }
-            if(i % 8 === 2) {
+            if(i % 12 === 2) {
                 vertsArray[i] = this.endPos[0];
                 // vertsArray[i] = (this.endPos[0] * scaleFactor + offsetX);
             }
-            if(i % 8 === 3) {
+            if(i % 12 === 3) {
                 vertsArray[i] = this.endPos[1];
                 // vertsArray[i] = (this.endPos[1] * scaleFactor + offsetY);
             }
-            if(i % 8 === 4) {
+            if(i % 12 === 4) {
                 vertsArray[i] = this.strokeColor[0];
             }
-            if(i % 8 === 5) {
+            if(i % 12 === 5) {
                 vertsArray[i] = this.strokeColor[1];
             }
-            if(i % 8 === 6) {
+            if(i % 12 === 6) {
                 vertsArray[i] = this.strokeColor[2];
             }
-            if(i % 8 === 7) {
+            if(i % 12 === 7) {
                 vertsArray[i] = this.strokeColor[3];
+            }
+            if(i % 12 === 8) {
+                vertsArray[i] = this.radius;
             }
         }
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * vertsArraySize, vertsArray);
@@ -134,6 +137,14 @@ export class Stroke {
         this.strokeColor = vec4.fromValues(color[0], color[1], color[2], 1.0);
     }
 
+    updateWidth(width: number) {
+        this.radius = width;
+        if(this.numInstances === 0) {
+            return;
+        }
+        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * constants.StrokeVertexSize + 32, new Float32Array([width]));
+    }
+
     cleanVertexBuffer(instanceIdx: number) {
         // set the vertexbuffer at the index to 0
         const vertsArraySize = constants.StrokeVertexSize;
@@ -145,17 +156,14 @@ export class Stroke {
     withdrawStroke() {
         if(this.numInstances === 0) {
             this.cleanVertexBuffer(0);
-            this.updateVertexBuffer();
             return;
         }
         this.cleanVertexBuffer(this.numInstances-1);
-        console.log("instance number before withdraw:", this.numInstances);
         this.numInstances -= 10;
         if(this.numInstances < 0) {
             this.numInstances = 0;
             this.cleanVertexBuffer(0);
         }
-        console.log("instance number after withdraw:", this.numInstances);
         this.updateVertexBuffer();
     }
 

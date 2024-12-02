@@ -357,6 +357,12 @@ async function run(){
         
     });
 
+    // adjust stroke width
+    var width = {value: 0.01}
+    gui.add(width, 'value', 0.01, 0.1).name('Width').onChange((value) => {
+        stroke.updateWidth(value);
+    });
+
 
     // add eraser checkbox
     var eraser = {value: false}
