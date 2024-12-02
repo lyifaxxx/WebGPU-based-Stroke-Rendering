@@ -5,6 +5,8 @@ struct StrokeData {
     strokeColor: vec4<f32>,
     // width
     strokeWidth: f32,
+    // stroke type
+    strokeType: f32,
 };
 
 @group(0) @binding(0)
