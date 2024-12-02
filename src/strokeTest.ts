@@ -153,41 +153,6 @@ export class StrokeRenderer extends renderer.Renderer {
         );
     }
 
-    //  buildPipeline(fragShader: string) {
-    //     this.pipeline = renderer.device.createRenderPipeline({
-    //         label: 'stroke-pipeline',
-    //         layout: renderer.device.createPipelineLayout({
-    //             label: 'stroke-pipeline-layout',
-    //             bindGroupLayouts: [this.uniformsBindGroupLayout],
-    //         }),
-    //         vertex: {
-    //             module: renderer.device.createShaderModule({
-    //                 label: 'stroke-vert',
-    //                 code: strokeVert,
-    //             }),
-    //             entryPoint: 'main',
-    //         },
-    //         primitive: {
-    //             topology: 'triangle-strip',
-    //         },
-    //         fragment: {
-    //             module: renderer.device.createShaderModule({
-    //                 code: fragShader,
-    //             }),
-    //             entryPoint: 'main',
-    //             targets: [
-    //                 {
-    //                     format: renderer.format,
-    //                     blend: {
-    //                         color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
-    //                         alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
-    //                     },
-    //                 },
-    //             ],
-    //         },
-    //     });
-    // }
-
     updateBindGroup() {
         this.uniformsBindGroup = renderer.device.createBindGroup({
             label: 'UpdatedUniformsBindGroup',
@@ -281,6 +246,7 @@ async function loadTexture(url: string): Promise<GPUTexture> {
     return textureImg;
 }
 
+
 async function run(){
 
     await renderer.initWebGPU()
@@ -360,6 +326,11 @@ async function run(){
         URL.revokeObjectURL(a.href); // Cleanup
     }
 
+    function undo() {
+        console.log("undo");
+        stroke.withdrawStroke();
+    }
+
     function handleStrokeSelection(target) {
         let selectedShader;
         switch (target) {
@@ -423,6 +394,8 @@ async function run(){
     gui.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
     gui.add({ selectExport: () => exportSVG() }, 'selectExport').name('Export to SVG');
 
+    // withdraw last stroke
+    gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
 
     function frame() {
         // start draw
