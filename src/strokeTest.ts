@@ -151,56 +151,42 @@ export class StrokeRenderer extends renderer.Renderer {
                 }
             }
         );
-
-        // this.uniformsBindGroup = renderer.device.createBindGroup({
-        //     label: 'UniformGroup',
-        //     layout: this.pipeline.getBindGroupLayout(0),
-        //     entries: [
-        //         {
-        //             binding: 0,
-        //             resource: {
-        //                 buffer: stroke.vertexBuffer
-        //             }
-        //         }
-        //     ]
-        // })
-
     }
 
-     buildPipeline(fragShader: string) {
-        this.pipeline = renderer.device.createRenderPipeline({
-            label: 'stroke-pipeline',
-            layout: renderer.device.createPipelineLayout({
-                label: 'stroke-pipeline-layout',
-                bindGroupLayouts: [this.uniformsBindGroupLayout],
-            }),
-            vertex: {
-                module: renderer.device.createShaderModule({
-                    label: 'stroke-vert',
-                    code: strokeVert,
-                }),
-                entryPoint: 'main',
-            },
-            primitive: {
-                topology: 'triangle-strip',
-            },
-            fragment: {
-                module: renderer.device.createShaderModule({
-                    code: fragShader,
-                }),
-                entryPoint: 'main',
-                targets: [
-                    {
-                        format: renderer.format,
-                        blend: {
-                            color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
-                            alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
-                        },
-                    },
-                ],
-            },
-        });
-    }
+    //  buildPipeline(fragShader: string) {
+    //     this.pipeline = renderer.device.createRenderPipeline({
+    //         label: 'stroke-pipeline',
+    //         layout: renderer.device.createPipelineLayout({
+    //             label: 'stroke-pipeline-layout',
+    //             bindGroupLayouts: [this.uniformsBindGroupLayout],
+    //         }),
+    //         vertex: {
+    //             module: renderer.device.createShaderModule({
+    //                 label: 'stroke-vert',
+    //                 code: strokeVert,
+    //             }),
+    //             entryPoint: 'main',
+    //         },
+    //         primitive: {
+    //             topology: 'triangle-strip',
+    //         },
+    //         fragment: {
+    //             module: renderer.device.createShaderModule({
+    //                 code: fragShader,
+    //             }),
+    //             entryPoint: 'main',
+    //             targets: [
+    //                 {
+    //                     format: renderer.format,
+    //                     blend: {
+    //                         color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+    //                         alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+    //                     },
+    //                 },
+    //             ],
+    //         },
+    //     });
+    // }
 
     updateBindGroup() {
         this.uniformsBindGroup = renderer.device.createBindGroup({
@@ -303,7 +289,7 @@ async function run(){
     // console.log("device", renderer.device)
 
     // gui
-    const gui = new GUI()
+    const gui = new GUI();
     
     // add new stroke
     const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
@@ -339,6 +325,68 @@ async function run(){
         stroke.updateColorBuffer(strokeColor);
         
     });
+
+    function handleStrokeSelection(target) {
+        let selectedShader;
+        switch (target) {
+            case 'vanilla':
+                console.log('Switching to Vanilla stroke');
+                // Add logic to set up "Vanilla" stroke
+                selectedShader = basicFrag;
+                break;
+            case 'Stamp':
+                console.log('Switching to Stamp stroke');
+                // Add logic to set up "Stamp" stroke
+                selectedShader = stampFrag;
+                break;
+            case 'Air':
+                console.log('Switching to Air stroke');
+                // Add logic to set up "Air" stroke
+                selectedShader = airFrag;
+                break;
+            default:
+                console.error(`Unknown stroke: ${target}`);
+                selectedShader = basicFrag;
+        }
+
+        // Dynamically rebuild the pipeline with the selected shader
+        strokeRenderer.pipeline = renderer.device.createRenderPipeline({
+            label: "stroke-pipeline",
+            layout: renderer.device.createPipelineLayout({
+                label: "stroke-pipeline-layout",
+                bindGroupLayouts: [strokeRenderer.uniformsBindGroupLayout],
+            }),
+            vertex: {
+                module: renderer.device.createShaderModule({
+                    label: "stroke-vert",
+                    code: strokeVert,
+                }),
+                entryPoint: "main",
+            },
+            primitive: {
+                topology: "triangle-strip",
+            },
+            fragment: {
+                module: renderer.device.createShaderModule({
+                    code: selectedShader,
+                }),
+                entryPoint: "main",
+                targets: [
+                    {
+                        format: renderer.format,
+                        blend: {
+                            color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+                            alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+                        },
+                    },
+                ],
+            },
+        });
+    }
+
+    gui.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
+    gui.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
+    gui.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
 
     function frame() {
         // start draw

@@ -20,7 +20,7 @@ export class Stroke {
     maxStrokes = 10000;
     radius = 0.01;
 
-    strokeColor: vec4 = vec4.create();
+    strokeColor: vec4 = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
 
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
