@@ -10,7 +10,8 @@ fn main(
     @location(4) p: vec2<f32>,
     @location(5) valid: f32,
     @location(6) l0: f32,
-    @location(7) l1: f32
+    @location(7) l1: f32,
+    @location(8) strokeColor: vec4<f32>
 
 ) -> @location(0) vec4<f32> {
     let tangent = normalize(p1 - p0);
@@ -47,6 +48,11 @@ fn main(
 
 
     let rotatedUV = vec2<f32>(1.0 - uv.y, uv.x);
-    let color = textureSample(strokeTexture, strokeSampler, uv);
-    return vec4<f32>(color.rgb, color.a);
+    var color = textureSample(strokeTexture, strokeSampler, uv);
+    var outputColor = vec3(1.0, 1.0, 1.0) - color.rgb;
+    outputColor *= strokeColor.rgb;
+    if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
+        return vec4<f32>(1.0, 1.0, 1.0, 1.0);
+    }
+    return vec4<f32>(outputColor.rgb, color.a);
 }

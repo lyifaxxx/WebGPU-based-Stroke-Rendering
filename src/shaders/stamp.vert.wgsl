@@ -1,7 +1,9 @@
 
 struct StrokeData {
-    positions: vec4<f32>
-    lengths: vec2<f32>,   // l0 (start length), l1 (end length)
+    positions: vec4<f32>,
+    strokeColor: vec4<f32>
+    //lengths: vec2<f32>,   // l0 (start length), l1 (end length)
+
 };
 
 @group(0) @binding(0)
@@ -19,7 +21,8 @@ struct VertexOutput {
     @location(5) valid: f32,
     // pass the length values to fragment shader
     @location(6) l0: f32,
-    @location(7) l1: f32
+    @location(7) l1: f32,
+    @location(8) strokeColor: vec4<f32>
 };
 
 @vertex
@@ -38,6 +41,7 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     output.p1 = position1;
     output.r0 = radius0;
     output.r1 = radius1;
+    output.strokeColor = strokes[in_instance_index].strokeColor;
 
     // 计算圆心之间的角度
     let cosTheta = (radius0 - radius1) / distance(position0, position1);
@@ -82,6 +86,8 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     
     output.p = trapzoidVertexPosition;
     output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); // 不使用 MVP 矩阵
+
+    
 
     return output;
 }

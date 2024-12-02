@@ -10,7 +10,8 @@ fn main(
     @location(4) p: vec2<f32>,
     @location(5) valid: f32,
     @location(6) l0: f32,
-    @location(7) l1: f32
+    @location(7) l1: f32,
+    @location(8) strokeColor: vec4<f32>
 
 ) -> @location(0) vec4<f32> {
     let tangent = normalize(p1 - p0);
@@ -46,7 +47,10 @@ fn main(
     // Remove corners
     if(pLocal.x < 0.0 && d0 > r0){ discard; } // left corners
     if(pLocal.x > len && d1 > r0){ discard; }// right corners
-    return vec4<f32>(0.0,0.0,0.0,alpha);
+    if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
+        return vec4<f32>(1.0, 1.0, 1.0, 1.0);
+    }
+    return vec4<f32>(strokeColor.rgb, alpha);
 
 
     // // return vec4<f32>(0.0, 0.0, 0.0, 1.0); // 返回黑色并应用透明度
