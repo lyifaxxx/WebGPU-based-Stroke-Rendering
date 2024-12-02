@@ -3,6 +3,7 @@ import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
 import stampFrag from './shaders/stamp.frag.wgsl?raw'
 import airFrag from './shaders/air.frag.wgsl?raw'
+import computeShader from './shaders/prefix.cs.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3 } from "gl-matrix";
@@ -14,8 +15,12 @@ import textureUrl from '../stamp1.png'
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
+    computePipeline: GPUComputePipeline;
     uniformsBindGroup: GPUBindGroup;
     uniformsBindGroupLayout: GPUBindGroupLayout;
+
+    computeBindGroup: GPUBindGroup;
+    computeBindGroupLayout: GPUBindGroupLayout;
 
     // Store the stroke texture and its view
     strokeTexture: GPUTexture;
@@ -50,6 +55,7 @@ export class StrokeRenderer extends renderer.Renderer {
             label: 'UniformsBindGroupLayout',
             entries: [
                 {
+                    // vertex buffer binding
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: {
@@ -57,16 +63,19 @@ export class StrokeRenderer extends renderer.Renderer {
                     }
                 },
                 {
+                    // Sampler binding
                     binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: {}
                 },
                 {
+                    // Texture view binding
                     binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: {}
                 },
                 {
+                    // color buffer binding
                     binding: 3,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: {
@@ -101,6 +110,47 @@ export class StrokeRenderer extends renderer.Renderer {
                     binding: 3,
                     resource: {
                         buffer: stroke.colorBuffer
+                    }
+                }
+            ]
+        })
+
+        this.computeBindGroupLayout = renderer.device.createBindGroupLayout({
+            label: 'ComputeBindGroupLayout',
+            entries: [
+                {
+                    // vertex buffer binding
+                    binding: 0,
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: {
+                        type: 'read-only-storage',
+                    }
+                },
+                {
+                    // stamp count
+                    binding: 1,
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: {
+                        type: 'storage',
+                    }
+                }
+            ]
+        });
+
+        this.computeBindGroup = renderer.device.createBindGroup({
+            label: 'ComputeBindGroup',
+            layout: this.computeBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: stroke.vertexBuffer
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: stroke.stampCountBuffer
                     }
                 }
             ]
@@ -151,6 +201,21 @@ export class StrokeRenderer extends renderer.Renderer {
                 }
             }
         );
+
+        this.computePipeline = renderer.device.createComputePipeline({
+            layout: renderer.device.createPipelineLayout({
+                label: 'compute-pipeline',
+                bindGroupLayouts: [
+                    this.computeBindGroupLayout
+                ]
+            }),
+            compute: {
+                module: renderer.device.createShaderModule({
+                    code: computeShader
+                }),
+                entryPoint: 'main'
+            }
+        });
     }
 
     //  buildPipeline(fragShader: string) {
