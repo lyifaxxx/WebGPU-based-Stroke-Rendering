@@ -344,16 +344,19 @@ async function run(){
                 console.log('Switching to Vanilla stroke');
                 // Add logic to set up "Vanilla" stroke
                 selectedShader = basicFrag;
+                stroke.updateType(0);
                 break;
             case 'Stamp':
                 console.log('Switching to Stamp stroke');
                 // Add logic to set up "Stamp" stroke
                 selectedShader = stampFrag;
+                stroke.updateType(1);
                 break;
             case 'Air':
                 console.log('Switching to Air stroke');
                 // Add logic to set up "Air" stroke
                 selectedShader = airFrag;
+                stroke.updateType(2);
                 break;
             default:
                 console.error(`Unknown stroke: ${target}`);

@@ -2,6 +2,12 @@ import { device, canvas, constants } from '../renderer';
 import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import { vertex } from './cube';
 
+export enum StrokeType {
+    vanilla = 0,
+    stamp = 1,
+    airbrush = 2,
+}
+
 
 export class Stroke {
     vertexBuffer: GPUBuffer;
@@ -21,6 +27,7 @@ export class Stroke {
     radius = 0.01;
 
     strokeColor: vec4 = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+    strokeType: StrokeType = StrokeType.vanilla;
 
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
@@ -108,6 +115,9 @@ export class Stroke {
             if(i % 12 === 8) {
                 vertsArray[i] = this.radius;
             }
+            if(i % 12 === 9) {
+                vertsArray[i] = this.strokeType;
+            }
         }
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * vertsArraySize, vertsArray);
         device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
@@ -134,7 +144,15 @@ export class Stroke {
         if(this.numInstances === 0) {
             return;
         }
-        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances - 1) * constants.StrokeVertexSize + 32, new Float32Array([width]));
+        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances) * constants.StrokeVertexSize + 32, new Float32Array([width]));
+    }
+
+    updateType(type: StrokeType) {
+        this.strokeType = type;
+        if(this.numInstances === 0) {
+            return;
+        }
+        device.queue.writeBuffer(this.vertexBuffer, (this.numInstances) * constants.StrokeVertexSize + 36, new Float32Array([type]));
     }
 
     cleanVertexBuffer(instanceIdx: number) {
