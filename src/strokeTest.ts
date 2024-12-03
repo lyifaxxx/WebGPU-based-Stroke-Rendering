@@ -256,6 +256,8 @@ async function run(){
 
     // gui
     const gui = new GUI();
+    let strokeFolder: GUI;
+    let typeFolder: GUI;
     
     // add new stroke
     const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
@@ -282,10 +284,12 @@ async function run(){
         strokeRenderer.draw()
     })
 
+    strokeFolder = gui.addFolder('Stroke Properties');
+
     // add color control
     var color = {value: [0, 0, 0]}
     var strokeColor = vec3.fromValues(color.value[0]/255, color.value[1]/255, color.value[2]/255);
-    gui.addColor(color, 'value').onChange((value) => {  
+    strokeFolder.addColor(color, 'value').onChange((value) => {  
         strokeColor = vec3.fromValues(value[0]/255, value[1]/255, value[2]/255);
         console.log("strokeColor", strokeColor);
         stroke.updateColorBuffer(strokeColor);
@@ -294,9 +298,11 @@ async function run(){
 
     // adjust stroke width
     var width = {value: 0.01}
-    gui.add(width, 'value', 0.01, 0.1).name('Width').onChange((value) => {
+    strokeFolder.add(width, 'value', 0.01, 0.1).name('Width').onChange((value) => {
         stroke.updateWidth(value);
     });
+
+    strokeFolder.open();
 
 
     // add eraser checkbox
@@ -398,13 +404,20 @@ async function run(){
         });
     }
 
-    gui.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
-    gui.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
-    gui.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
+    typeFolder = gui.addFolder('Stroke Type');
+
+    typeFolder.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
+    typeFolder.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
+    typeFolder.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
     gui.add({ selectExport: () => exportSVG() }, 'selectExport').name('Export to SVG');
+
+    typeFolder.open();
 
     // withdraw last stroke
     gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
+
+    // clear the screen
+    gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
 
     function frame() {
         // start draw
