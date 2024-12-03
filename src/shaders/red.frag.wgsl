@@ -11,7 +11,8 @@ fn main(
     @location(5) valid: f32,
     @location(6) l0: f32,
     @location(7) l1: f32,
-    @location(8) strokeColor: vec4<f32>
+    @location(8) strokeColor: vec4<f32>,
+    @location(9) strokeType: f32
 
 ) -> @location(0) vec4<f32> {
     let tangent = normalize(p1 - p0);
