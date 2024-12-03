@@ -163,24 +163,31 @@ export class Stroke {
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances) * constants.StrokeVertexSize + 36, new Float32Array([type]));
     }
 
-    cleanVertexBuffer(instanceIdx: number) {
+    cleanVertexBufferByIndex(instanceIdx: number) {
         // set the vertexbuffer at the index to 0
         const vertsArraySize = constants.StrokeVertexSize;
         const vertsArray = new Float32Array(vertsArraySize);
         device.queue.writeBuffer(this.vertexBuffer, instanceIdx * vertsArraySize, vertsArray);
     }
 
+    cleanVertexBuffer() {  
+        // set the vertexbuffer at the index to 0
+        const vertsArraySize = constants.StrokeVertexSize * this.maxStrokes;
+        const vertsArray = new Float32Array(vertsArraySize);
+        device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
+    }
+
     // withdraw the last stroke
     withdrawStroke() {
         if(this.numInstances === 0) {
-            this.cleanVertexBuffer(0);
+            this.cleanVertexBufferByIndex(0);
             return;
         }
-        this.cleanVertexBuffer(this.numInstances-1);
+        this.cleanVertexBufferByIndex(this.numInstances-1);
         this.numInstances -= 10;
         if(this.numInstances < 0) {
             this.numInstances = 0;
-            this.cleanVertexBuffer(0);
+            this.cleanVertexBufferByIndex(0);
         }
         this.updateVertexBuffer();
     }
