@@ -13,6 +13,7 @@ export class Stroke {
     vertexBuffer: GPUBuffer;
     indexBuffer: GPUBuffer;
     colorBuffer: GPUBuffer;
+    stampCountBuffer: GPUBuffer;
 
     // depthTexture: GPUTexture;
     // depthTextureView: GPUTextureView;
@@ -65,6 +66,13 @@ export class Stroke {
         });
         const colorArray = new Float32Array([1.0, 0.0, 0.0, 1.0]);
         device.queue.writeBuffer(this.colorBuffer, 0, colorArray);
+
+        // Create the stamp count buffer
+        this.stampCountBuffer = device.createBuffer({
+            label: "stamp count buffer",
+            size: 4, // just one integer 
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+        });
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
