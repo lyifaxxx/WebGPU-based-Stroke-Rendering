@@ -101,6 +101,7 @@ export class Track {
             // Update the lengths of the polyline
             const lastLength = this.lengths[this.lengths.length - 1];
             const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
+            // console.log("OUTPUTTTTTTT segmentLength: ", segmentLength);
             this.lengths.push(lastLength + segmentLength);
 
             // console.log("Bigger than 0.01");

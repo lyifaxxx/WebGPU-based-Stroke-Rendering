@@ -3,6 +3,7 @@ import strokeVert from './shaders/stroke.vert.wgsl?raw'
 import basicFrag from './shaders/red.frag.wgsl?raw'
 import stampFrag from './shaders/stamp.frag.wgsl?raw'
 import airFrag from './shaders/air.frag.wgsl?raw'
+import computeShader from './shaders/prefix.cs.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3, vec4 } from "gl-matrix";
@@ -14,8 +15,12 @@ import textureUrl from '../stamp1.png'
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
+    computePipeline: GPUComputePipeline;
     uniformsBindGroup: GPUBindGroup;
     uniformsBindGroupLayout: GPUBindGroupLayout;
+
+    computeBindGroup: GPUBindGroup;
+    computeBindGroupLayout: GPUBindGroupLayout;
 
     // Store the stroke texture and its view
     strokeTexture: GPUTexture;
@@ -50,6 +55,7 @@ export class StrokeRenderer extends renderer.Renderer {
             label: 'UniformsBindGroupLayout',
             entries: [
                 {
+                    // vertex buffer binding
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: {
@@ -57,16 +63,19 @@ export class StrokeRenderer extends renderer.Renderer {
                     }
                 },
                 {
+                    // Sampler binding
                     binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: {}
                 },
                 {
+                    // Texture view binding
                     binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: {}
                 },
                 {
+                    // color buffer binding
                     binding: 3,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: {
@@ -101,6 +110,47 @@ export class StrokeRenderer extends renderer.Renderer {
                     binding: 3,
                     resource: {
                         buffer: stroke.colorBuffer
+                    }
+                }
+            ]
+        })
+
+        this.computeBindGroupLayout = renderer.device.createBindGroupLayout({
+            label: 'ComputeBindGroupLayout',
+            entries: [
+                {
+                    // vertex buffer binding
+                    binding: 0,
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: {
+                        type: 'read-only-storage',
+                    }
+                },
+                {
+                    // stamp count
+                    binding: 1,
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: {
+                        type: 'storage',
+                    }
+                }
+            ]
+        });
+
+        this.computeBindGroup = renderer.device.createBindGroup({
+            label: 'ComputeBindGroup',
+            layout: this.computeBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: stroke.vertexBuffer
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: stroke.stampCountBuffer
                     }
                 }
             ]
@@ -151,6 +201,21 @@ export class StrokeRenderer extends renderer.Renderer {
                 }
             }
         );
+
+        this.computePipeline = renderer.device.createComputePipeline({
+            layout: renderer.device.createPipelineLayout({
+                label: 'compute-pipeline',
+                bindGroupLayouts: [
+                    this.computeBindGroupLayout
+                ]
+            }),
+            compute: {
+                module: renderer.device.createShaderModule({
+                    code: computeShader
+                }),
+                entryPoint: 'main'
+            }
+        });
     }
 
     updateBindGroup() {
@@ -256,6 +321,8 @@ async function run(){
 
     // gui
     const gui = new GUI();
+    let strokeFolder: GUI;
+    let typeFolder: GUI;
     
     // add new stroke
     const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
@@ -282,10 +349,12 @@ async function run(){
         strokeRenderer.draw()
     })
 
+    strokeFolder = gui.addFolder('Stroke Properties');
+
     // add color control
     var color = {value: [0, 0, 0]}
     var strokeColor = vec3.fromValues(color.value[0]/255, color.value[1]/255, color.value[2]/255);
-    gui.addColor(color, 'value').onChange((value) => {  
+    strokeFolder.addColor(color, 'value').onChange((value) => {  
         strokeColor = vec3.fromValues(value[0]/255, value[1]/255, value[2]/255);
         console.log("strokeColor", strokeColor);
         stroke.updateColorBuffer(strokeColor);
@@ -294,9 +363,11 @@ async function run(){
 
     // adjust stroke width
     var width = {value: 0.01}
-    gui.add(width, 'value', 0.01, 0.1).name('Width').onChange((value) => {
+    strokeFolder.add(width, 'value', 0.01, 0.1).name('Width').onChange((value) => {
         stroke.updateWidth(value);
     });
+
+    strokeFolder.open();
 
 
     // add eraser checkbox
@@ -443,24 +514,21 @@ async function run(){
             case 'vanilla':
                 console.log('Switching to Vanilla stroke');
                 // Add logic to set up "Vanilla" stroke
-                selectedShader = basicFrag;
                 stroke.updateType(0);
                 break;
             case 'Stamp':
                 console.log('Switching to Stamp stroke');
                 // Add logic to set up "Stamp" stroke
-                selectedShader = stampFrag;
                 stroke.updateType(1);
                 break;
             case 'Air':
                 console.log('Switching to Air stroke');
                 // Add logic to set up "Air" stroke
-                selectedShader = airFrag;
                 stroke.updateType(2);
                 break;
             default:
                 console.error(`Unknown stroke: ${target}`);
-                selectedShader = basicFrag;
+                stroke.updateType(0);
         }
 
         // Dynamically rebuild the pipeline with the selected shader
@@ -482,7 +550,7 @@ async function run(){
             },
             fragment: {
                 module: renderer.device.createShaderModule({
-                    code: selectedShader,
+                    code: basicFrag,
                 }),
                 entryPoint: "main",
                 targets: [
@@ -498,13 +566,20 @@ async function run(){
         });
     }
 
-    gui.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
-    gui.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
-    gui.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
+    typeFolder = gui.addFolder('Stroke Type');
+
+    typeFolder.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
+    typeFolder.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
+    typeFolder.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
     gui.add({ selectExport: () => exportSVG() }, 'selectExport').name('Export to SVG');
+
+    typeFolder.open();
 
     // withdraw last stroke
     gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
+
+    // clear the screen
+    gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
 
     function frame() {
         // start draw

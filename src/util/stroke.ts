@@ -13,6 +13,7 @@ export class Stroke {
     vertexBuffer: GPUBuffer;
     indexBuffer: GPUBuffer;
     colorBuffer: GPUBuffer;
+    stampCountBuffer: GPUBuffer;
 
     // depthTexture: GPUTexture;
     // depthTextureView: GPUTextureView;
@@ -67,6 +68,13 @@ export class Stroke {
         });
         const colorArray = new Float32Array([1.0, 0.0, 0.0, 1.0]);
         device.queue.writeBuffer(this.colorBuffer, 0, colorArray);
+
+        // Create the stamp count buffer
+        this.stampCountBuffer = device.createBuffer({
+            label: "stamp count buffer",
+            size: 4, // just one integer 
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+        });
 
         // Create the indirect buffer
         this.indirectBuffer = device.createBuffer({
@@ -157,24 +165,31 @@ export class Stroke {
         device.queue.writeBuffer(this.vertexBuffer, (this.numInstances) * constants.StrokeVertexSize + 36, new Float32Array([type]));
     }
 
-    cleanVertexBuffer(instanceIdx: number) {
+    cleanVertexBufferByIndex(instanceIdx: number) {
         // set the vertexbuffer at the index to 0
         const vertsArraySize = constants.StrokeVertexSize;
         const vertsArray = new Float32Array(vertsArraySize);
         device.queue.writeBuffer(this.vertexBuffer, instanceIdx * vertsArraySize, vertsArray);
     }
 
+    cleanVertexBuffer() {  
+        // set the vertexbuffer at the index to 0
+        const vertsArraySize = constants.StrokeVertexSize * this.maxStrokes;
+        const vertsArray = new Float32Array(vertsArraySize);
+        device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
+    }
+
     // withdraw the last stroke
     withdrawStroke() {
         if(this.numInstances === 0) {
-            this.cleanVertexBuffer(0);
+            this.cleanVertexBufferByIndex(0);
             return;
         }
-        this.cleanVertexBuffer(this.numInstances-1);
+        this.cleanVertexBufferByIndex(this.numInstances-1);
         this.numInstances -= 10;
         if(this.numInstances < 0) {
             this.numInstances = 0;
-            this.cleanVertexBuffer(0);
+            this.cleanVertexBufferByIndex(0);
         }
         this.updateVertexBuffer();
     }

@@ -25,7 +25,8 @@ struct VertexOutput {
     // pass the length values to fragment shader
     @location(6) l0: f32,
     @location(7) l1: f32,
-    @location(8) strokeColor: vec4<f32>
+    @location(8) strokeColor: vec4<f32>,
+    @location(9) strokeType: f32,
 };
 
 @vertex
@@ -45,6 +46,9 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     output.p1 = position1;
     output.r0 = radius0;
     output.r1 = radius1;
+    // cast f32 to u32
+    output.strokeType = strokes[in_instance_index].strokeType;
+    //output.strokeType = strokes[in_instance_index].strokeType;
 
     // 计算圆心之间的角度
     let cosTheta = (radius0 - radius1) / distance(position0, position1);
