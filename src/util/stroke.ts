@@ -20,6 +20,7 @@ export class Stroke {
     numIndices = 1;
     startPos: vec2 = vec2.create();
     endPos: vec2 = vec2.create();
+    displayColor: vec4 = vec4.fromValues(0, 0, 0, 1);
 
     indirectBuffer: GPUBuffer;
     numInstances = 0; // change from stokes to polyline
@@ -33,6 +34,7 @@ export class Stroke {
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
         this.startPos = startPos;
         this.endPos = endPos;
+        this.displayColor = this.strokeColor;
 
         // Hardcoded indices for a line between the two vertices
         const indices = new Uint32Array([

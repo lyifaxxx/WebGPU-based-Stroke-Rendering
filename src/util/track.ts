@@ -77,6 +77,8 @@ export class Track {
             
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device, this.strokeStart, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
 
             // initialize the lengths of the polyline
@@ -109,6 +111,8 @@ export class Track {
 
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
        }
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
@@ -139,11 +143,12 @@ export class Track {
 
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
         }
         canvas.style.cursor = 'default';
         // console.log("polyline: ", this.polyline);
-        this.polyline = [];
     }
     onFrame() {
 

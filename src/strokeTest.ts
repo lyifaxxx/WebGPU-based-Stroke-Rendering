@@ -5,7 +5,7 @@ import stampFrag from './shaders/stamp.frag.wgsl?raw'
 import airFrag from './shaders/air.frag.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
-import { mat4, vec2, vec3 } from "gl-matrix";
+import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import * as renderer from './renderer';
 // import textureUrl from '../texture.webp?url'
 //import png
@@ -289,7 +289,7 @@ async function run(){
         strokeColor = vec3.fromValues(value[0]/255, value[1]/255, value[2]/255);
         console.log("strokeColor", strokeColor);
         stroke.updateColorBuffer(strokeColor);
-        
+        stroke.strokeColor = vec4.fromValues(strokeColor[0], strokeColor[1], strokeColor[2], 1);
     });
 
     // adjust stroke width
@@ -309,17 +309,117 @@ async function run(){
         }
     });
 
-    function exportSVG() {
+
+    // Add Stamp Loader to GUI
+    const loaderConfig = {
+        loadStamp: () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "image/*";
+            fileInput.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file); // Create a blob URL
+                    const newTexture = await loadTexture(url); // Load the new texture
+                    strokeRenderer.strokeTexture = newTexture;
+                    strokeRenderer.strokeTextureView = newTexture.createView({
+                        label: "Loaded Stamp Texture View",
+                    });
+                    strokeRenderer.updateBindGroup();
+                    strokeRenderer.draw(); // Redraw with the new texture
+                    // handleLoadedTexture(url); // Pass the URL to another function
+                    console.log(`Loaded texture: ${url}`);
+                }
+            };
+            fileInput.click(); // Trigger the file input
+        },
+    };
+
+    gui.add(loaderConfig, "loadStamp").name("Load Stamp Image");
+
+    function NDCToPixel(ndc: vec2) {
+        const pixel = vec2.create();
         const width = renderer.size.width;
         const height = renderer.size.height;
 
+        const normalizedX = (ndc[0] + 1) * 0.5;
+        const normalizedY = (ndc[1] + 1) * 0.5;
+
+        pixel[0] = normalizedX * width;
+        pixel[1] = (1 - normalizedY) * height;
+        
+        
+        return pixel;
+    }
+
+    function exportSVG() {
+        const width = renderer.size.width;
+        const height = renderer.size.height;
+        
         // Example SVG content using geometry (customize as needed)
+        let paths = '';
+        track.polyline.forEach((stroke) => {
+            console.log(stroke);
+            let startPixel = NDCToPixel(stroke.startPos);
+            let endPixel = NDCToPixel(stroke.endPos);
+
+            const radius = 1000 * stroke.radius;
+            let perpenDir = vec3.create();
+            let dir = vec2.create();
+            vec2.subtract(dir, endPixel, startPixel);
+            vec2.normalize(dir, dir);
+            vec3.cross(perpenDir, vec3.fromValues(dir[0], dir[1], 0), vec3.fromValues(0, 0, -1));         
+            
+            paths += `
+                <path d="
+                    M ${startPixel[0]} ${startPixel[1]}
+                    L ${endPixel[0]} ${endPixel[1]}
+                    L ${endPixel[0] - perpenDir[0] * radius} ${endPixel[1] - perpenDir[1] * radius}
+                    A ${radius} ${radius} 0 0 1 ${endPixel[0] + perpenDir[0] * radius} ${endPixel[1] + perpenDir[1] * radius}
+                    L ${startPixel[0]+ perpenDir[0] * radius} ${startPixel[1] + perpenDir[1] * radius}
+                    A ${radius} ${radius} 0 0 1 ${startPixel[0] - perpenDir[0] * radius} ${startPixel[1] - perpenDir[1] * radius}
+                    L ${endPixel[0] - perpenDir[0] * radius} ${endPixel[1] - perpenDir[1] * radius}
+                    L ${endPixel[0]} ${endPixel[1]}
+                    Z
+                " 
+                fill="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" fill-opacity="${1}" />
+            `;
+        });
+        
         const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <rect x="10" y="10" width="100" height="50" fill="red" />
-            <circle cx="150" cy="50" r="40" fill="blue" />
-            <!-- Add more shapes based on your scene -->
-        </svg>`;
+            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+                ${paths}
+            </svg>
+        `;
+        // const svgContent = `
+        // <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 800 600">
+        //     <path d="
+        //         M 80 80
+        //         L 130 80
+        //         L 130 70
+        //         A 10 10 0 0 1 130 90
+        //         L 80 90
+        //         A 10 10 0 0 1 80 70
+        //         L 130 70
+        //         L 130 80
+        //         Z
+        //     " 
+        //     fill="rgb(0, 128, 255)" fill-opacity="0.5"
+        //      />
+        //     <path d="
+        //         M 100 50
+        //         L 100 150
+        //         L 110 150
+        //         A 10 10 0 0 1 90 150
+        //         L 90 50
+        //         A 10 10 0 0 1 110 50
+        //         L 110 150
+        //         L 100 150
+        //         Z
+        //     " 
+        //     fill="rgb(0, 128, 255)" fill-opacity="0.5" />
+        // </svg>
+        // `;
 
         // Convert the SVG content to a Blob
         const blob = new Blob([svgContent], { type: "image/svg+xml" });
