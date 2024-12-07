@@ -20,6 +20,7 @@ export class Track {
 
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];
+    allStrokes: Stroke[] = [];
 
     // Store the lengths of the polyline
     lengths: number[] = []; 
@@ -80,6 +81,7 @@ export class Track {
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
+            this.allStrokes.push(newStroke);
 
             // initialize the lengths of the polyline
             this.lengths = [0];
@@ -115,6 +117,7 @@ export class Track {
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
+            this.allStrokes.push(newStroke);
        }
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
     }
@@ -147,9 +150,11 @@ export class Track {
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
             this.polyline.push(newStroke);
+            this.allStrokes.push(newStroke);
         }
         canvas.style.cursor = 'default';
         // console.log("polyline: ", this.polyline);
+        this.polyline = [];
     }
     onFrame() {
 

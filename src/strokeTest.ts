@@ -429,8 +429,8 @@ async function run(){
         
         // Example SVG content using geometry (customize as needed)
         let paths = '';
-        track.polyline.forEach((stroke) => {
-            console.log(stroke);
+        console.log(track.allStrokes);
+        track.allStrokes.forEach((stroke) => {
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
@@ -462,36 +462,7 @@ async function run(){
                 ${paths}
             </svg>
         `;
-        // const svgContent = `
-        // <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 800 600">
-        //     <path d="
-        //         M 80 80
-        //         L 130 80
-        //         L 130 70
-        //         A 10 10 0 0 1 130 90
-        //         L 80 90
-        //         A 10 10 0 0 1 80 70
-        //         L 130 70
-        //         L 130 80
-        //         Z
-        //     " 
-        //     fill="rgb(0, 128, 255)" fill-opacity="0.5"
-        //      />
-        //     <path d="
-        //         M 100 50
-        //         L 100 150
-        //         L 110 150
-        //         A 10 10 0 0 1 90 150
-        //         L 90 50
-        //         A 10 10 0 0 1 110 50
-        //         L 110 150
-        //         L 100 150
-        //         Z
-        //     " 
-        //     fill="rgb(0, 128, 255)" fill-opacity="0.5" />
-        // </svg>
-        // `;
-
+        
         // Convert the SVG content to a Blob
         const blob = new Blob([svgContent], { type: "image/svg+xml" });
 
