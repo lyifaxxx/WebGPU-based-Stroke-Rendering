@@ -399,18 +399,6 @@ async function run(){
 
     strokeFolder.open();
 
-
-    // add eraser checkbox
-    var eraser = {value: false}
-    gui.add(eraser, 'value').name('Eraser').onChange((value) => {
-        if(value) {
-            stroke.updateColorBuffer(vec3.fromValues(1.0, 1.0, 1.0));
-        } else {
-            stroke.updateColorBuffer(strokeColor);
-        }
-    });
-
-
     // Add Stamp Loader to GUI
     const loaderConfig = {
         loadStamp: () => {

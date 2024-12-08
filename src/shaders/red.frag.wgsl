@@ -51,9 +51,6 @@ fn main(
         case 1: { // Stamp Stroke
             var outputColor = vec3(1.0, 1.0, 1.0) - color.rgb;
             outputColor *= strokeColor.rgb;
-            if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
-            return vec4<f32>(1.0, 1.0, 1.0, 1.0);
-            }
             return vec4<f32>(outputColor.rgb, color.a);
         }
         case 2: { // Airbrush Stroke
@@ -75,10 +72,11 @@ fn main(
             // Remove corners
             if(pLocal.x < 0.0 && d0 > r0){ discard; } // left corners
             if(pLocal.x > len && d1 > r0){ discard; }// right corners
-            if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0 ){
-                return vec4<f32>(1.0, 1.0, 1.0, 1.0);
-            }
             return vec4<f32>(strokeColor.rgb, alpha);
+        }
+        case 3: { // eraser
+            return vec4<f32>(1.0, 1.0, 1.0, 1.0);
+
         }
         default: {
             return strokeColor;
