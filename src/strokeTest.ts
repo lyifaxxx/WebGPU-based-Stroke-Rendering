@@ -430,18 +430,33 @@ async function run(){
         // Example SVG content using geometry (customize as needed)
         let paths = '';
         console.log(track.allStrokes);
+        let count = 0;
         track.allStrokes.forEach((stroke) => {
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
-            const radius = 1000 * stroke.radius;
+            const radius = 800 * stroke.radius;
             let perpenDir = vec3.create();
             let dir = vec2.create();
             vec2.subtract(dir, endPixel, startPixel);
+            if (dir.length < 1) {
+                return;
+            }
             vec2.normalize(dir, dir);
-            vec3.cross(perpenDir, vec3.fromValues(dir[0], dir[1], 0), vec3.fromValues(0, 0, -1));         
+            vec3.cross(perpenDir, vec3.fromValues(dir[0], dir[1], 0), vec3.fromValues(0, 0, -1));   
             
-            paths += `
+            let colorElement = '';
+            if (stroke.strokeType == 2) {
+                colorElement += 
+                `
+                <radialGradient id="complexGradient${count}" cx="50%" cy="50%" r="50%">
+                    <stop offset="50%" stop-color="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" stop-opacity="0.01" />
+                    <stop offset="60%" stop-color="rgb(255, 255, 255)" stop-opacity="0" />
+                </radialGradient>
+                `
+            }
+            
+            paths += `${colorElement}
                 <path d="
                     M ${startPixel[0]} ${startPixel[1]}
                     L ${endPixel[0]} ${endPixel[1]}
@@ -452,9 +467,16 @@ async function run(){
                     L ${endPixel[0] - perpenDir[0] * radius} ${endPixel[1] - perpenDir[1] * radius}
                     L ${endPixel[0]} ${endPixel[1]}
                     Z
-                " 
-                fill="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" fill-opacity="${1}" />
-            `;
+                " `;
+            
+            if (stroke.strokeType == 2) {
+                paths += `fill="url(#complexGradient${count})" /> `;
+            } else {
+                paths += `fill="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" fill-opacity="${1}" />`;
+            }
+
+            count += 1;
+                
         });
         
         const svgContent = `
@@ -462,7 +484,9 @@ async function run(){
                 ${paths}
             </svg>
         `;
-        
+
+        console.log(svgContent);
+
         // Convert the SVG content to a Blob
         const blob = new Blob([svgContent], { type: "image/svg+xml" });
 

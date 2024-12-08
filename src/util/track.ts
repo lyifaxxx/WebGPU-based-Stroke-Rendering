@@ -80,6 +80,7 @@ export class Track {
             const newStroke = new Stroke(device, this.strokeStart, this.strokeStart);
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
             this.allStrokes.push(newStroke);
 
@@ -116,6 +117,7 @@ export class Track {
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
             this.allStrokes.push(newStroke);
        }
@@ -149,6 +151,7 @@ export class Track {
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
             newStroke.displayColor = this.stroke.strokeColor;
             newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
             this.allStrokes.push(newStroke);
         }
