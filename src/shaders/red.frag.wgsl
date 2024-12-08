@@ -75,7 +75,7 @@ fn main(
             // Remove corners
             if(pLocal.x < 0.0 && d0 > r0){ discard; } // left corners
             if(pLocal.x > len && d1 > r0){ discard; }// right corners
-            if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
+            if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0 ){
                 return vec4<f32>(1.0, 1.0, 1.0, 1.0);
             }
             return vec4<f32>(strokeColor.rgb, alpha);

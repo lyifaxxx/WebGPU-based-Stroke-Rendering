@@ -6,6 +6,7 @@ export enum StrokeType {
     vanilla = 0,
     stamp = 1,
     airbrush = 2,
+    eraser = 3,
 }
 
 interface PresetData {
@@ -144,6 +145,8 @@ export class Stroke {
             return;
         }
     
+        this.numInstances = 0;
+        this.cleanVertexBuffer();
         // all the strokes are stored in a single buffer
         const vertsArraySize = constants.StrokeVertexSize; // 4 floats(2*vec2 for p0, p1) per vertex, 4 floats per stroke color, 1 float + 3 padding per stroke width
         const vertsArray = new Float32Array(vertsArraySize * this.presetStrokes.length);
@@ -161,6 +164,7 @@ export class Stroke {
             vertsArray[offset + 7] = stroke.strokeColor[3];
             vertsArray[offset + 8] = stroke.radius;
             vertsArray[offset + 9] = stroke.strokeType;
+            this.numInstances++;
         });
     
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
@@ -220,6 +224,13 @@ export class Stroke {
             }));
             console.log('Preset strokes imported from JSON:', this.presetStrokes);
             this.updateVertexBufferWithPresetData();
+            this.data = this.presetStrokes.map(stroke => ({
+                startPos: vec2.clone(stroke.startPos),
+                endPos: vec2.clone(stroke.endPos),
+                strokeColor: vec4.clone(stroke.strokeColor),
+                radius: stroke.radius,
+                strokeType: stroke.strokeType,
+            }));
         } catch (error) {
             console.error('Failed to parse JSON data:', error, jsonData);
         }

@@ -552,6 +552,11 @@ async function run(){
                 // Add logic to set up "Air" stroke
                 stroke.updateType(2);
                 break;
+            case 'Eraser':
+                console.log('Switching to Eraser stroke');
+                // Add logic to set up "Eraser" stroke
+                stroke.updateType(3);
+                break
             default:
                 console.error(`Unknown stroke: ${target}`);
                 stroke.updateType(0);
@@ -598,6 +603,7 @@ async function run(){
     typeFolder.add({ selectVanilla: () => handleStrokeSelection('vanilla') }, 'selectVanilla').name('Vanilla Stroke');
     typeFolder.add({ selectStamp: () => handleStrokeSelection('Stamp') }, 'selectStamp').name('Stamp Stroke');
     typeFolder.add({ selectAir: () => handleStrokeSelection('Air') }, 'selectAir').name('Air Stroke');
+    typeFolder.add({ selectEraser: () => handleStrokeSelection('Eraser') }, 'selectEraser').name('Eraser Stroke');
     gui.add({ selectExport: () => exportSVG() }, 'selectExport').name('Export to SVG');
 
     typeFolder.open();
