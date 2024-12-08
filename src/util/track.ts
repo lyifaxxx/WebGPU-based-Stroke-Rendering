@@ -1,6 +1,8 @@
 import { mat4, vec2, vec3 } from "gl-matrix";
 import { device, canvas } from '../renderer';
 import { Stroke } from "./stroke";
+import { StrokeRenderer } from '../strokeTest';
+import { vec4 } from "gl-matrix";
 
 // This class is used to track mouse position and create vertex data
 export class Track {
@@ -21,11 +23,12 @@ export class Track {
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];
 
-    // Store the lengths of the polyline
-    lengths: number[] = []; 
+    strokeRenderer: StrokeRenderer;
 
     constructor(stroke: Stroke) {
         this.stroke = stroke;
+
+        this.strokeRenderer = new StrokeRenderer(this.stroke, this);
 
         window.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
@@ -57,7 +60,7 @@ export class Track {
         //console.log("canvas.height:", canvas.height);
         return ndc;
     }
-
+  
     // For now, get the positions when mouse is clicked and released as p0 and p1 of a stroke
     private onMouseDown(evt: MouseEvent) {
         // The middle mouse button is pressed
@@ -79,8 +82,6 @@ export class Track {
             const newStroke = new Stroke(device, this.strokeStart, this.strokeStart);
             this.polyline.push(newStroke);
 
-            // initialize the lengths of the polyline
-            this.lengths = [0];
         }
     }
 
@@ -93,16 +94,8 @@ export class Track {
         //this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
         
         const currentStroke = this.polyline[this.polyline.length - 1];
-    //    if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.00001){
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
 
-            // Update the lengths of the polyline
-            const lastLength = this.lengths[this.lengths.length - 1];
-            const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
-            // console.log("OUTPUTTTTTTT segmentLength: ", segmentLength);
-            this.lengths.push(lastLength + segmentLength);
-
-            // console.log("Bigger than 0.01");
             // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
@@ -125,15 +118,8 @@ export class Track {
         // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
 
         const currentStroke = this.polyline[this.polyline.length - 1];
-        // if(vec2.distance(this.strokeEnd,this.strokeStart) > 0.01){
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.00001){
-            // Update the lengths of the polyline
-            const lastLength = this.lengths[this.lengths.length - 1];
-            const segmentLength = vec2.distance(currentStroke.endPos, this.strokeEnd);
-            this.lengths.push(lastLength + segmentLength);
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
 
-            // console.log("Bigger than 0.01");
-            // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
             this.stroke.numInstances++;
@@ -141,11 +127,16 @@ export class Track {
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
             this.polyline.push(newStroke);
+
         }
         canvas.style.cursor = 'default';
         // console.log("polyline: ", this.polyline);
-        this.polyline = [];
+        // this.polyline = [];
+        
+        // Do polyline Computation
+        this.strokeRenderer.computeCumulativeLengths(this.polyline);
     }
+
     onFrame() {
 
     }

@@ -21,6 +21,7 @@ export const constants = {
     numVertPerStroke: 4,
     //TODO: add texture size here
     StrokeTextureSize: 1024,
+    MaxNumVert: 5000,
 };
 
 // Initialize WebGPU

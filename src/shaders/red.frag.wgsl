@@ -43,6 +43,7 @@ fn main(
     var color = textureSample(strokeTexture, strokeSampler, uv);
     var resultColor: vec4<f32>;
     let castType = i32(strokeType);
+    
     switch (castType) {
         case 0: { // Vanilla Stroke
             return strokeColor;

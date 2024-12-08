@@ -8,19 +8,18 @@ import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3 } from "gl-matrix";
 import * as renderer from './renderer';
-// import textureUrl from '../texture.webp?url'
-//import png
+import presetFile from "../paths.json";
 import textureUrl from '../stamp1.png'
-
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
-    computePipeline: GPUComputePipeline;
     uniformsBindGroup: GPUBindGroup;
     uniformsBindGroupLayout: GPUBindGroupLayout;
 
+    computePipeline: GPUComputePipeline;
     computeBindGroup: GPUBindGroup;
     computeBindGroupLayout: GPUBindGroupLayout;
+    cumulativeLengthsBuffer: GPUBuffer;
 
     // Store the stroke texture and its view
     strokeTexture: GPUTexture;
@@ -28,6 +27,12 @@ export class StrokeRenderer extends renderer.Renderer {
     
     constructor(stroke: Stroke, track: Track) {
         super(stroke, track);
+
+        this.cumulativeLengthsBuffer = renderer.device.createBuffer({
+            size: Float32Array.BYTES_PER_ELEMENT * renderer.constants.MaxNumVert,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, // store the value of cumulative lengths in compute shader
+        });
+        renderer.device.queue.writeBuffer(this.cumulativeLengthsBuffer, 0, new Float32Array(renderer.constants.MaxNumVert).fill(0));
         
         this.strokeTexture = renderer.device.createTexture({
             label: "Initiate texture",
@@ -133,6 +138,14 @@ export class StrokeRenderer extends renderer.Renderer {
                     buffer: {
                         type: 'storage',
                     }
+                },
+                {
+                    // cumulative lengths buffer
+                    binding: 2,
+                    visibility: GPUShaderStage.COMPUTE,
+                    buffer: {
+                        type: 'storage',
+                    }
                 }
             ]
         });
@@ -151,6 +164,12 @@ export class StrokeRenderer extends renderer.Renderer {
                     binding: 1,
                     resource: {
                         buffer: stroke.stampCountBuffer
+                    }
+                },
+                {
+                    binding: 2,
+                    resource: {
+                        buffer: this.cumulativeLengthsBuffer
                     }
                 }
             ]
@@ -217,6 +236,26 @@ export class StrokeRenderer extends renderer.Renderer {
             }
         });
     }
+
+    computeCumulativeLengths(polyline: Stroke[]) {
+        // Update vertex buffer with the latest polyline data
+        // for (let i = 0; i < polyline.length; i++) {
+        //     const stroke = polyline[i];
+        //     // Write stroke data to the vertex buffer (already supported in your Stroke class)
+        //     stroke.updateVertexBuffer();
+        // }
+
+        // Dispatch compute shader to calculate cumulative lengths
+        const commandEncoder = renderer.device.createCommandEncoder();
+        const passEncoder = commandEncoder.beginComputePass();
+        passEncoder.setPipeline(this.computePipeline);
+        passEncoder.setBindGroup(0, this.computeBindGroup);
+        passEncoder.dispatchWorkgroups(Math.ceil(polyline.length / renderer.constants.StrokeComputeWorkgroupSize));
+        passEncoder.end();
+        renderer.device.queue.submit([commandEncoder.finish()]);
+        // console.log("computeCumulativeLengths callllllll");
+    }
+
 
     updateBindGroup() {
         this.uniformsBindGroup = renderer.device.createBindGroup({
@@ -451,6 +490,7 @@ async function run(){
             fragment: {
                 module: renderer.device.createShaderModule({
                     code: basicFrag,
+                    // code: stampFrag,
                 }),
                 entryPoint: "main",
                 targets: [
@@ -480,6 +520,13 @@ async function run(){
 
     // clear the screen
     gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
+
+    // download the preset data
+    gui.add({ selectDownload: () => stroke.exportPresetData() }, 'selectDownload').name('Download Data');
+
+    // load the preset data
+    const jsonString = JSON.stringify(presetFile);
+    gui.add({ selectLoad: () => stroke.readPresetData(jsonString) }, 'selectLoad').name('Load Data');
 
     function frame() {
         // start draw

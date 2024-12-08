@@ -32,7 +32,7 @@ struct VertexOutput {
 @vertex
 fn main(@builtin(vertex_index) VertexIndex: u32, 
 @builtin(instance_index) in_instance_index: u32) -> VertexOutput {
-
+    // Fetch stroke data for the current instance
     let position0: vec2<f32> = strokes[in_instance_index].positions.xy;
     let position1: vec2<f32> = strokes[in_instance_index].positions.zw;
     let radius0: f32 = strokes[in_instance_index].strokeWidth;
@@ -46,14 +46,14 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     output.p1 = position1;
     output.r0 = radius0;
     output.r1 = radius1;
+    output.l0 = l0;
+    output.l1 = l1;
     // cast f32 to u32
     output.strokeType = strokes[in_instance_index].strokeType;
-    //output.strokeType = strokes[in_instance_index].strokeType;
 
-    // 计算圆心之间的角度
+    // Calculate the cos value of the angle between two circles
     let cosTheta = (radius0 - radius1) / distance(position0, position1);
-    if (abs(cosTheta) >= 1.0) { // 完全内切的情况，不绘制边缘
-        output.valid = 0.0;
+    if (abs(cosTheta) >= 1.0) {
     }
     
     let tangent = normalize(position1 - position0);
@@ -61,6 +61,7 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     let position = array<vec2<f32>, 4>(
         position0, position0, position1, position1
     )[VertexIndex];
+
 
     //Each instance is a rectangle, whose vertices' positions are determined here.
     let offsetSign = array<vec2<f32>, 4>(
@@ -80,19 +81,16 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
         tanHalfTheta, tanHalfTheta, cotHalfTheta, cotHalfTheta
     )[VertexIndex];
 
-    if (normalTanValue > 10.0 || normalTanValue < 0.1) { // 过滤边缘异常情况
+    if (normalTanValue > 10.0 || normalTanValue < 0.1) { 
         output.valid = 0.0;
     }
 
-    // let trapzoidVertexPosition = position +
-    //     offsetSign.x * radius * tangent +
-    //     offsetSign.y * radius * normal * normalTanValue;
     let trapzoidVertexPosition = position +
         offsetSign.x * radius * tangent +
         offsetSign.y * radius * normal;
     
     output.p = trapzoidVertexPosition;
-    output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); // 不使用 MVP 矩阵
+    output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); 
 
     output.strokeColor = strokes[in_instance_index].strokeColor;
 

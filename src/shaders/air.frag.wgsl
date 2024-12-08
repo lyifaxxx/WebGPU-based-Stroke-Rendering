@@ -50,22 +50,5 @@ fn main(
     if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
         return vec4<f32>(1.0, 1.0, 1.0, 1.0);
     }
-    return vec4<f32>(strokeColor.rgb, alpha);
-
-
-    // // return vec4<f32>(0.0, 0.0, 0.0, 1.0); // 返回黑色并应用透明度
-
-    // let u = clamp((pLocal.x / len), 0.0, 1.0); // [0, 1]
-    // let v = clamp((pLocal.y / r0 + 1.0) * 0.5, 0.0, 1.0); // [0, 1]
-    // let uv = vec2<f32>(u, v);
-    // // return vec4<f32>(uv.x, uv.y, 0.0, 1.0);
-    // // return vec4<f32>(uv.x, 0.0, 0.0, 1.0); // u only
-    // // return vec4<f32>(0.0, uv.y, 0.0, 1.0); // v only
-
-
-    // let rotatedUV = vec2<f32>(1.0 - uv.y, uv.x);
-    // let color = textureSample(strokeTexture, strokeSampler, uv);
-    // return vec4<f32>(color.rgb, color.a);
-
-    
+    return vec4<f32>(strokeColor.rgb, alpha);   
 }

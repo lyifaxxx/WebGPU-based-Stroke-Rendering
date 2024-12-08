@@ -41,6 +41,8 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     output.p1 = position1;
     output.r0 = radius0;
     output.r1 = radius1;
+    output.l0 = l0;
+    output.l1 = l1;
     output.strokeColor = strokes[in_instance_index].strokeColor;
 
     // 计算圆心之间的角度
