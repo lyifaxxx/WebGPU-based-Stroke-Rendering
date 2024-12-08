@@ -280,6 +280,181 @@ export class StrokeRenderer extends renderer.Renderer {
     }
 }
 
+// renderer for presets
+// uses another canvas to render the presets
+export class PresetRenderer extends renderer.Renderer {
+    pipeline: GPURenderPipeline;
+    uniformsBindGroup: GPUBindGroup;
+    uniformsBindGroupLayout: GPUBindGroupLayout;
+
+     // Store the stroke texture and its view
+     strokeTexture: GPUTexture;
+     strokeTextureView: GPUTextureView
+
+    constructor(stroke: Stroke, track: Track) {
+        super(stroke, track);
+
+        this.strokeTexture = renderer.device.createTexture({
+            label: "Initiate texture",
+            size: [renderer.size.width, renderer.size.height], 
+            //size: [512, 512], 
+            format: 'rgba8unorm', 
+            usage: GPUTextureUsage.TEXTURE_BINDING |  
+                   GPUTextureUsage.COPY_SRC |        
+                   GPUTextureUsage.RENDER_ATTACHMENT 
+        });        
+
+        this.strokeTextureView = this.strokeTexture.createView({
+            label: "Initiate texture view"
+        });
+
+        this.uniformsBindGroupLayout = renderer.device.createBindGroupLayout({
+            label: 'UniformsBindGroupLayout',
+            entries: [
+                {
+                    // vertex buffer binding
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'read-only-storage',
+                    }
+                },
+                {
+                    // color buffer binding
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'read-only-storage',
+                    }
+                }
+            ]
+        });
+
+        this.uniformsBindGroup = renderer.device.createBindGroup({
+            label: 'UniformsBindGroup',
+            layout: this.uniformsBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: stroke.vertexBuffer
+                    }
+                },
+                {
+                    // color buffer
+                    binding: 1,
+                    resource: {
+                        buffer: stroke.colorBuffer
+                    }
+                }
+            ]
+        })
+
+        this.pipeline = renderer.device.createRenderPipeline(
+            {
+                label: 'preset-pipeline',
+                layout: renderer.device.createPipelineLayout({
+                    label: 'preset-pipeline-layout',
+                    bindGroupLayouts: [this.uniformsBindGroupLayout]
+                }),    
+                vertex: {
+                    module: renderer.device.createShaderModule({
+                        label: 'stroke-vert',
+                        code: strokeVert
+                    }),
+                    entryPoint: 'main',
+                },
+                primitive: {
+                    topology: 'triangle-strip' // try point-list, line-list, line-strip, triangle-strip?
+                },
+                fragment: {
+                    module: renderer.device.createShaderModule({
+                        code: basicFrag
+                    }),
+                    entryPoint: 'main',
+                    targets: [
+                        {
+                            format: renderer.format,
+                            blend: {
+                                color: {
+                                    srcFactor: 'src-alpha',   // 使用源的 Alpha 值
+                                    dstFactor: 'one-minus-src-alpha', // 目标透明度
+                                    operation: 'add',
+                                },
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add',
+                                },
+                            },
+                        }
+                    ]
+                }
+            }
+        );
+    }
+
+    updateBindGroup() {
+        this.uniformsBindGroup = renderer.device.createBindGroup({
+            label: 'UpdatedUniformsBindGroup',
+            layout: this.uniformsBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.stroke.vertexBuffer,
+                    },
+                },
+                {
+                    binding: 1,
+                    resource: renderer.device.createSampler({
+                        label: 'UpdatedSampler',
+                        magFilter: 'linear',
+                        minFilter: 'linear',
+                    }),
+                },
+                {
+                    binding: 2,
+                    resource: this.strokeTextureView, // use new texture view
+                },
+                {
+                    // color buffer
+                    binding: 3,
+                    resource: {
+                        buffer: this.stroke.colorBuffer,
+                    },
+                }
+            ],
+        });
+    }
+
+    override draw() {
+        const commandEncoder = renderer.device.createCommandEncoder()
+        const view = renderer.context.getCurrentTexture().createView({
+            label: 'getCurrentTexture texture view'
+        })
+        const renderPassDescriptor: GPURenderPassDescriptor = {
+            colorAttachments: [
+            {
+                view: view,
+                clearValue: { r: 1.0, g: 1.0, b: 1.0, a: 1.0 },
+                loadOp: 'clear', // clear/load
+                storeOp: 'store' // store/discard
+            }
+            ]
+        }
+        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+        passEncoder.setPipeline(this.pipeline)
+        passEncoder.setBindGroup(0, this.uniformsBindGroup)
+
+        passEncoder.drawIndirect(this.stroke.indirectBuffer, 0)
+
+        passEncoder.end()
+        // webgpu run in a separate process, all the commands will be executed after submit
+        renderer.device.queue.submit([commandEncoder.finish()])
+    }
+}
+
 
 async function loadTexture(url: string): Promise<GPUTexture> {
     const response = await fetch(url);
@@ -318,35 +493,71 @@ async function run(){
     const canvas = renderer.canvas;
     // console.log("canvas", canvas)
     // console.log("device", renderer.device)
+    // add track class
+
+    // add new stroke
+    const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
+    // stroke for presets
+    const presetStroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
+
+    const track = new Track(stroke);
+    const trackPreset = new Track(presetStroke);
 
     // gui
     const gui = new GUI();
     let strokeFolder: GUI;
     let typeFolder: GUI;
-    
-    // add new stroke
-    const stroke = new Stroke(renderer.device, vec2.fromValues(-0.5, 0.0), vec2.fromValues(0.5, 0.0))
 
-    // add track class
-    const track = new Track(stroke);
     var strokeRenderer: StrokeRenderer;
     strokeRenderer = new StrokeRenderer(stroke, track);
 
+    // preset renderer
+    var presetRenderer: PresetRenderer;
+    presetRenderer = new PresetRenderer(presetStroke, trackPreset);
+
+    var curRenderer: renderer.Renderer | undefined;
+
+    const renderModes = { stroke: 'stroke', preset: 'preset' };
+
+    function setRenderer(mode: string) {
+        //curRenderer?.stop();
+    
+        switch (mode) {
+            case renderModes.stroke:
+                curRenderer = strokeRenderer;
+                console.log("curRenderer", curRenderer);
+                break;
+            case renderModes.preset:
+                curRenderer = presetRenderer;
+                console.log("curRenderer", curRenderer);
+                break;
+            default:
+                console.error(`Unknown render mode: ${mode}`);
+                curRenderer = strokeRenderer;
+        }
+    }
+    
+    let renderModeController = gui.add({ mode: renderModes.stroke }, 'mode', renderModes);
+    renderModeController.onChange(setRenderer);
+    //console.log("renderModeController", renderModeController.getValue());
+
+    setRenderer(renderModeController.getValue());
+
     // add texture from image
     const stampTexture = await loadTexture(textureUrl);
-    strokeRenderer.strokeTexture = stampTexture;
+    curRenderer.strokeTexture = stampTexture;
     // console.log("stampTexture", strokeRenderer.strokeTexture);
-    strokeRenderer.strokeTextureView = stampTexture.createView({
+    curRenderer.strokeTextureView = stampTexture.createView({
         label: "Texture from image texture view"
     });
-    strokeRenderer.updateBindGroup();
+    curRenderer.updateBindGroup();
 
     // re-configure context on resize
     window.addEventListener('resize', ()=>{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;        
         // don't need to recall context.configure() after v104
-        strokeRenderer.draw()
+        curRenderer.draw()
     })
 
     strokeFolder = gui.addFolder('Stroke Properties');
@@ -392,12 +603,12 @@ async function run(){
                 if (file) {
                     const url = URL.createObjectURL(file); // Create a blob URL
                     const newTexture = await loadTexture(url); // Load the new texture
-                    strokeRenderer.strokeTexture = newTexture;
-                    strokeRenderer.strokeTextureView = newTexture.createView({
+                    curRenderer.strokeTexture = newTexture;
+                    curRenderer.strokeTextureView = newTexture.createView({
                         label: "Loaded Stamp Texture View",
                     });
-                    strokeRenderer.updateBindGroup();
-                    strokeRenderer.draw(); // Redraw with the new texture
+                    curRenderer.updateBindGroup();
+                    curRenderer.draw(); // Redraw with the new texture
                     // handleLoadedTexture(url); // Pass the URL to another function
                     console.log(`Loaded texture: ${url}`);
                 }
@@ -503,11 +714,11 @@ async function run(){
         }
 
         // Dynamically rebuild the pipeline with the selected shader
-        strokeRenderer.pipeline = renderer.device.createRenderPipeline({
+        curRenderer.pipeline = renderer.device.createRenderPipeline({
             label: "stroke-pipeline",
             layout: renderer.device.createPipelineLayout({
                 label: "stroke-pipeline-layout",
-                bindGroupLayouts: [strokeRenderer.uniformsBindGroupLayout],
+                bindGroupLayouts: [curRenderer.uniformsBindGroupLayout],
             }),
             vertex: {
                 module: renderer.device.createShaderModule({
@@ -552,9 +763,10 @@ async function run(){
     // clear the screen
     gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
 
+
     function frame() {
         // start draw
-        strokeRenderer.draw()
+        curRenderer.draw()
         requestAnimationFrame(frame)
         // console.log("FRAME:stampTexture", strokeRenderer.strokeTexture);
     }

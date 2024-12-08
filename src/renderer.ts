@@ -72,7 +72,7 @@ export abstract class Renderer {
     constructor(stroke: Stroke, track: Track) {
         this.stroke = stroke;
         this.track = track;
-        this.frameRequestId = requestAnimationFrame((t) => this.onFrame(t));
+        //this.frameRequestId = requestAnimationFrame((t) => this.onFrame(t));
     }
 
     stop(): void {
