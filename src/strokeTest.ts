@@ -238,13 +238,6 @@ export class StrokeRenderer extends renderer.Renderer {
     }
 
     computeCumulativeLengths(polyline: Stroke[]) {
-        // Update vertex buffer with the latest polyline data
-        // for (let i = 0; i < polyline.length; i++) {
-        //     const stroke = polyline[i];
-        //     // Write stroke data to the vertex buffer (already supported in your Stroke class)
-        //     stroke.updateVertexBuffer();
-        // }
-
         // Dispatch compute shader to calculate cumulative lengths
         const commandEncoder = renderer.device.createCommandEncoder();
         const passEncoder = commandEncoder.beginComputePass();
@@ -345,8 +338,6 @@ async function loadTexture(url: string): Promise<GPUTexture> {
         [imageBitmap.width, imageBitmap.height]
     );
 
-    // console.log('UPDATE: Loaded image:', imageBitmap);
-    // console.log('UPDATE: Created texture:', texture);
     return textureImg;
 }
 

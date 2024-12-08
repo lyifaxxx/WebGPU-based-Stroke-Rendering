@@ -1,6 +1,5 @@
 import { device, canvas, constants } from '../renderer';
 import { mat4, vec2, vec3, vec4 } from "gl-matrix";
-import { vertex } from './cube';
 const STORE_PRESET_DATA = true;
 
 export enum StrokeType {
@@ -136,30 +135,7 @@ export class Stroke {
         device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
     }
 
-    // Update the vertex buffer with the presetStrokes
-    // updateVertexBufferWithPresetData() {
-    //     if(this.presetStrokes.length === 0) {
-    //         console.error('No preset strokes to update the vertex buffer with');
-    //         return;
-    //     }
-    //     const vertsArraySize = constants.StrokeVertexSize * 10;
-    //     const vertsArray = new Float32Array(vertsArraySize * this.presetStrokes.length);
-    //     this.presetStrokes.forEach((stroke, i) => {
-    //         vertsArray[i * vertsArraySize] = stroke.startPos[0];
-    //         vertsArray[i * vertsArraySize + 1] = stroke.startPos[1];
-    //         vertsArray[i * vertsArraySize + 2] = stroke.endPos[0];
-    //         vertsArray[i * vertsArraySize + 3] = stroke.endPos[1];
-    //         vertsArray[i * vertsArraySize + 4] = stroke.strokeColor[0];
-    //         vertsArray[i * vertsArraySize + 5] = stroke.strokeColor[1];
-    //         vertsArray[i * vertsArraySize + 6] = stroke.strokeColor[2];
-    //         vertsArray[i * vertsArraySize + 7] = stroke.strokeColor[3];
-    //         vertsArray[i * vertsArraySize + 8] = stroke.radius;
-    //         vertsArray[i * vertsArraySize + 9] = stroke.strokeType;
-    //         device.queue.writeBuffer(this.vertexBuffer, i * vertsArraySize, vertsArray);
-    //         device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.presetStrokes.length]));
-    //     });
-    //     console.log('Preset strokes added to the vertex buffer:', vertsArray);
-    // }
+
     updateVertexBufferWithPresetData() {
         if (this.presetStrokes.length === 0) {
             console.error('No preset strokes to update the vertex buffer with');
@@ -171,7 +147,8 @@ export class Stroke {
         const vertsArray = new Float32Array(vertsArraySize * this.presetStrokes.length);
     
         this.presetStrokes.forEach((stroke, i) => {
-            const offset = i * vertsArraySize;
+            console.log('index and stroke:', i, stroke);
+            const offset = i * 12;
             vertsArray[offset + 0] = stroke.startPos[0];
             vertsArray[offset + 1] = stroke.startPos[1];
             vertsArray[offset + 2] = stroke.endPos[0];
@@ -186,8 +163,7 @@ export class Stroke {
     
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
     
-        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.presetStrokes.length + 10]));
-        console.log('Preset strokes added to the vertex buffer:', vertsArray);
+        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.presetStrokes.length]));
     }
     
     addPresetData(startPos: vec2, endPos: vec2) {
@@ -218,39 +194,8 @@ export class Stroke {
         this.clearPresetData();
     }
 
-    jsonTestData = `
-    [
-    {
-        "startPos": {"0":0.17013463377952576,"1":-0.1681222766637802},
-        "endPos": {"0":0.1603427231311798,"1":-0.1681222766637802},
-        "strokeColor": {"0":0.7105263471603394,"1":0.24468167126178741,"2":0.24468167126178741,"3":1},
-        "radius":0.01,
-        "strokeType":2
-    },
-    {
-        "startPos": {"0":0.1603427231311798,"1":-0.1681222766637802},
-        "endPos": {"0":0.15544675290584564,"1":-0.17030568420886993},
-        "strokeColor": {"0":0.7105263471603394,"1":0.24468167126178741,"2":0.24468167126178741,"3":1},
-        "radius":0.01,
-        "strokeType":2
-    }
-    ]
-    `;
-
     // Read the preset data from a JSON file
     presetStrokes: Stroke[] = [];
-
-    // readPresetData(jsonData: any) {
-    //     this.presetStrokes = JSON.parse(this.jsonTestData).map((data: any) => ({
-    //         startPos: vec2.fromValues(data.startPos[0], data.startPos[1]),
-    //         endPos: vec2.fromValues(data.endPos[0], data.endPos[1]),
-    //         strokeColor: vec4.fromValues(data.strokeColor[0], data.strokeColor[1], data.strokeColor[2], data.strokeColor[3]),
-    //         radius: data.radius,
-    //         strokeType: data.strokeType,
-    //     }));
-    //     this.updateVertexBufferWithPresetData();
-    //     console.log('Paths imported from paths.json', this.presetStrokes);
-    // }
 
     readPresetData(jsonData: any) {
         // make sure the JSON data is a string
@@ -258,7 +203,6 @@ export class Stroke {
             console.error('Invalid JSON data, expected a string:', jsonData);
             return;
         }
-    
         try {
             this.presetStrokes = JSON.parse(jsonData).map((data: any) => ({
                 startPos: vec2.fromValues(data.startPos[0], data.startPos[1]),
@@ -272,7 +216,7 @@ export class Stroke {
                 radius: data.radius,
                 strokeType: data.strokeType,
             }));
-            // console.log('Preset strokes imported from JSON:', this.presetStrokes);
+            console.log('Preset strokes imported from JSON:', this.presetStrokes);
             this.updateVertexBufferWithPresetData();
         } catch (error) {
             console.error('Failed to parse JSON data:', error, jsonData);
@@ -289,9 +233,6 @@ export class Stroke {
 
     // update color buffer
     updateColorBuffer(color: vec3) {
-        // const vertsArraySize = constants.StrokeVertexSize;
-        // const colorArray = new Float32Array([color[0], color[1], color[2], 1.0]);
-        // device.queue.writeBuffer(this.colorBuffer,  (this.numInstances - 1) * vertsArraySize + 32, colorArray);
         this.strokeColor = vec4.fromValues(color[0], color[1], color[2], 1.0);
     }
 

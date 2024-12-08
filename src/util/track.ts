@@ -44,7 +44,6 @@ export class Track {
 
     public getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
         const rect = canvas.getBoundingClientRect();
-        //console.log("rect:", rect);
         return {
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
@@ -55,9 +54,6 @@ export class Track {
         const ndc = vec2.create();
         ndc[0] = (pixel[0] / canvas.width) * 2 - 1;
         ndc[1] = (1 - pixel[1] / canvas.height) * 2 - 1;
-        //console.log("ndc:", ndc);
-        //console.log("canvas.width:", canvas.width);
-        //console.log("canvas.height:", canvas.height);
         return ndc;
     }
   
@@ -91,12 +87,10 @@ export class Track {
         const pos = this.getMousePos(canvas, evt);
         const canvasPos = this.pixelToNDC(vec2.fromValues(pos.x, pos.y));
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
-        //this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
         
         const currentStroke = this.polyline[this.polyline.length - 1];
         if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
 
-            // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
             this.stroke.numInstances++;
@@ -114,8 +108,6 @@ export class Track {
         const pos = this.getMousePos(canvas, evt);
         const canvasPos = this.pixelToNDC(vec2.fromValues(pos.x, pos.y));
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
-        // Create a new stroke object
-        // this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
 
         const currentStroke = this.polyline[this.polyline.length - 1];
         if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
@@ -130,8 +122,6 @@ export class Track {
 
         }
         canvas.style.cursor = 'default';
-        // console.log("polyline: ", this.polyline);
-        // this.polyline = [];
         
         // Do polyline Computation
         this.strokeRenderer.computeCumulativeLengths(this.polyline);
