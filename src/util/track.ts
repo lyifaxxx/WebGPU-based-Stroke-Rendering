@@ -20,6 +20,8 @@ export class Track {
 
     stroke: Stroke;
 
+    trackStep: number = 0.01;
+
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];
     allStrokes: Stroke[] = [];
@@ -94,7 +96,7 @@ export class Track {
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
         
         const currentStroke = this.polyline[this.polyline.length - 1];
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
 
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
@@ -119,7 +121,7 @@ export class Track {
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
 
         const currentStroke = this.polyline[this.polyline.length - 1];
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > 0.001){
+        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
 
             this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
