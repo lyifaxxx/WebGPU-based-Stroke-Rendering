@@ -6,7 +6,7 @@ import airFrag from './shaders/air.frag.wgsl?raw'
 import computeShader from './shaders/prefix.cs.wgsl?raw'
 import { Stroke } from './util/stroke'
 import { Track } from './util/track'
-import { mat4, vec2, vec3 } from "gl-matrix";
+import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import * as renderer from './renderer';
 import presetFile from "../paths.json";
 import textureUrl from '../stamp1.png'
@@ -388,7 +388,7 @@ async function run(){
         strokeColor = vec3.fromValues(value[0]/255, value[1]/255, value[2]/255);
         console.log("strokeColor", strokeColor);
         stroke.updateColorBuffer(strokeColor);
-        
+        stroke.strokeColor = vec4.fromValues(strokeColor[0], strokeColor[1], strokeColor[2], 1);
     });
 
     // adjust stroke width
@@ -410,17 +410,112 @@ async function run(){
         }
     });
 
-    function exportSVG() {
+
+    // Add Stamp Loader to GUI
+    const loaderConfig = {
+        loadStamp: () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "image/*";
+            fileInput.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file); // Create a blob URL
+                    const newTexture = await loadTexture(url); // Load the new texture
+                    strokeRenderer.strokeTexture = newTexture;
+                    strokeRenderer.strokeTextureView = newTexture.createView({
+                        label: "Loaded Stamp Texture View",
+                    });
+                    strokeRenderer.updateBindGroup();
+                    strokeRenderer.draw(); // Redraw with the new texture
+                    // handleLoadedTexture(url); // Pass the URL to another function
+                    console.log(`Loaded texture: ${url}`);
+                }
+            };
+            fileInput.click(); // Trigger the file input
+        },
+    };
+
+    gui.add(loaderConfig, "loadStamp").name("Load Stamp Image");
+
+    function NDCToPixel(ndc: vec2) {
+        const pixel = vec2.create();
         const width = renderer.size.width;
         const height = renderer.size.height;
 
+        const normalizedX = (ndc[0] + 1) * 0.5;
+        const normalizedY = (ndc[1] + 1) * 0.5;
+
+        pixel[0] = normalizedX * width;
+        pixel[1] = (1 - normalizedY) * height;
+        
+        
+        return pixel;
+    }
+
+    function exportSVG() {
+        const width = renderer.size.width;
+        const height = renderer.size.height;
+        
         // Example SVG content using geometry (customize as needed)
+        let paths = '';
+        console.log(track.allStrokes);
+        let count = 0;
+        track.allStrokes.forEach((stroke) => {
+            let startPixel = NDCToPixel(stroke.startPos);
+            let endPixel = NDCToPixel(stroke.endPos);
+
+            const radius = 800 * stroke.radius;
+            let perpenDir = vec3.create();
+            let dir = vec2.create();
+            vec2.subtract(dir, endPixel, startPixel);
+            if (dir.length < 1) {
+                return;
+            }
+            vec2.normalize(dir, dir);
+            vec3.cross(perpenDir, vec3.fromValues(dir[0], dir[1], 0), vec3.fromValues(0, 0, -1));   
+            
+            let colorElement = '';
+            if (stroke.strokeType == 2) {
+                colorElement += 
+                `
+                <radialGradient id="complexGradient${count}" cx="50%" cy="50%" r="50%">
+                    <stop offset="50%" stop-color="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" stop-opacity="0.01" />
+                    <stop offset="60%" stop-color="rgb(255, 255, 255)" stop-opacity="0" />
+                </radialGradient>
+                `
+            }
+            
+            paths += `${colorElement}
+                <path d="
+                    M ${startPixel[0]} ${startPixel[1]}
+                    L ${endPixel[0]} ${endPixel[1]}
+                    L ${endPixel[0] - perpenDir[0] * radius} ${endPixel[1] - perpenDir[1] * radius}
+                    A ${radius} ${radius} 0 0 1 ${endPixel[0] + perpenDir[0] * radius} ${endPixel[1] + perpenDir[1] * radius}
+                    L ${startPixel[0]+ perpenDir[0] * radius} ${startPixel[1] + perpenDir[1] * radius}
+                    A ${radius} ${radius} 0 0 1 ${startPixel[0] - perpenDir[0] * radius} ${startPixel[1] - perpenDir[1] * radius}
+                    L ${endPixel[0] - perpenDir[0] * radius} ${endPixel[1] - perpenDir[1] * radius}
+                    L ${endPixel[0]} ${endPixel[1]}
+                    Z
+                " `;
+            
+            if (stroke.strokeType == 2) {
+                paths += `fill="url(#complexGradient${count})" /> `;
+            } else {
+                paths += `fill="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" fill-opacity="${1}" />`;
+            }
+
+            count += 1;
+                
+        });
+        
         const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <rect x="10" y="10" width="100" height="50" fill="red" />
-            <circle cx="150" cy="50" r="40" fill="blue" />
-            <!-- Add more shapes based on your scene -->
-        </svg>`;
+            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+                ${paths}
+            </svg>
+        `;
+
+        console.log(svgContent);
 
         // Convert the SVG content to a Blob
         const blob = new Blob([svgContent], { type: "image/svg+xml" });
@@ -435,6 +530,7 @@ async function run(){
 
     function undo() {
         console.log("undo");
+        track.allStrokes.length = track.allStrokes.length - 10;
         stroke.withdrawStroke();
     }
 
@@ -508,9 +604,14 @@ async function run(){
 
     // withdraw last stroke
     gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
+    
+    function clearScreen() {
+        track.allStrokes = [];
+        stroke.cleanVertexBuffer();
+    }
 
     // clear the screen
-    gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
+    gui.add({ selectClear: () => clearScreen() }, 'selectClear').name('Clear');
 
     // download the preset data
     gui.add({ selectDownload: () => stroke.exportPresetData() }, 'selectDownload').name('Download Data');

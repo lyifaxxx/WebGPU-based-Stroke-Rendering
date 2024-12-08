@@ -22,6 +22,7 @@ export class Track {
 
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];
+    allStrokes: Stroke[] = [];
 
     strokeRenderer: StrokeRenderer;
 
@@ -76,7 +77,11 @@ export class Track {
             
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device, this.strokeStart, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
+            this.allStrokes.push(newStroke);
 
         }
     }
@@ -97,7 +102,11 @@ export class Track {
 
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
+            this.allStrokes.push(newStroke);
        }
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
     }
@@ -118,8 +127,11 @@ export class Track {
 
             // Initialize a new stroke for the polyline
             const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
+            newStroke.displayColor = this.stroke.strokeColor;
+            newStroke.radius = this.stroke.radius;
+            newStroke.strokeType = this.stroke.strokeType;
             this.polyline.push(newStroke);
-
+            this.allStrokes.push(newStroke);
         }
         canvas.style.cursor = 'default';
         
