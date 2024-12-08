@@ -500,6 +500,7 @@ async function run(){
 
     function undo() {
         console.log("undo");
+        track.allStrokes.length = track.allStrokes.length - 10;
         stroke.withdrawStroke();
     }
 
@@ -572,9 +573,14 @@ async function run(){
 
     // withdraw last stroke
     gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
+    
+    function clearScreen() {
+        track.allStrokes = [];
+        stroke.cleanVertexBuffer();
+    }
 
     // clear the screen
-    gui.add({ selectClear: () => stroke.cleanVertexBuffer() }, 'selectClear').name('Clear');
+    gui.add({ selectClear: () => clearScreen() }, 'selectClear').name('Clear');
 
     function frame() {
         // start draw
