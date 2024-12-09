@@ -95,20 +95,14 @@ export class Track {
         const canvasPos = this.pixelToNDC(vec2.fromValues(pos.x, pos.y));
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
         
-        const currentStroke = this.polyline[this.polyline.length - 1];
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
+        // const currentStroke = this.polyline[this.polyline.length - 1];
+        // if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
+        if(vec2.distance(this.strokeEnd, this.strokeStart) > this.trackStep){
 
-            this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
+            // this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
+            this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
             this.stroke.numInstances++;
-
-            // Initialize a new stroke for the polyline
-            const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
-            newStroke.displayColor = this.stroke.strokeColor;
-            newStroke.radius = this.stroke.radius;
-            newStroke.strokeType = this.stroke.strokeType;
-            this.polyline.push(newStroke);
-            this.allStrokes.push(newStroke);
        }
         canvas.style.cursor = 'default';  //grabbing, crosshair, move, pointer, text, wait
     }
@@ -120,20 +114,14 @@ export class Track {
         const canvasPos = this.pixelToNDC(vec2.fromValues(pos.x, pos.y));
         this.strokeEnd = vec2.fromValues(canvasPos[0], canvasPos[1]);
 
-        const currentStroke = this.polyline[this.polyline.length - 1];
-        if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
+        // const currentStroke = this.polyline[this.polyline.length - 1];
+        // if(vec2.distance(this.strokeEnd,currentStroke.endPos) > this.trackStep){
+        if(vec2.distance(this.strokeEnd, this.strokeStart) > this.trackStep){
 
-            this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
+            // this.stroke.updateStroke(currentStroke.endPos, this.strokeEnd);
+            this.stroke.updateStroke(this.strokeStart, this.strokeEnd);
             this.strokeStart = vec2.clone(this.strokeEnd);
             this.stroke.numInstances++;
-
-            // Initialize a new stroke for the polyline
-            const newStroke = new Stroke(device,currentStroke.endPos, this.strokeStart);
-            newStroke.displayColor = this.stroke.strokeColor;
-            newStroke.radius = this.stroke.radius;
-            newStroke.strokeType = this.stroke.strokeType;
-            this.polyline.push(newStroke);
-            this.allStrokes.push(newStroke);
         }
         canvas.style.cursor = 'default';
         

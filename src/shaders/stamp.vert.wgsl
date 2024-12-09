@@ -45,9 +45,8 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
     output.l1 = l1;
     output.strokeColor = strokes[in_instance_index].strokeColor;
 
-    // 计算圆心之间的角度
     let cosTheta = (radius0 - radius1) / distance(position0, position1);
-    if (abs(cosTheta) >= 1.0) { // 完全内切的情况，不绘制边缘
+    if (abs(cosTheta) >= 1.0) { 
         output.valid = 0.0;
     }
     
@@ -75,19 +74,16 @@ fn main(@builtin(vertex_index) VertexIndex: u32,
         tanHalfTheta, tanHalfTheta, cotHalfTheta, cotHalfTheta
     )[VertexIndex];
 
-    if (normalTanValue > 10.0 || normalTanValue < 0.1) { // 过滤边缘异常情况
+    if (normalTanValue > 10.0 || normalTanValue < 0.1) { 
         output.valid = 0.0;
     }
 
-    // let trapzoidVertexPosition = position +
-    //     offsetSign.x * radius * tangent +
-    //     offsetSign.y * radius * normal * normalTanValue;
     let trapzoidVertexPosition = position +
         offsetSign.x * radius * tangent +
         offsetSign.y * radius * normal;
     
     output.p = trapzoidVertexPosition;
-    output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); // 不使用 MVP 矩阵
+    output.Position = vec4<f32>(trapzoidVertexPosition, 0.0, 1.0); 
 
     
 

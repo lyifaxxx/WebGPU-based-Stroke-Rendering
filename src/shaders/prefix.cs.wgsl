@@ -59,7 +59,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     
     // Shared memory for prefix sum
-    shared var<workgroup> segmentLengths: array<f32> = array<f32>(0.0, 0.0, 0.0); // 示例初始化
+    shared var<workgroup> segmentLengths: array<f32,5000>;
 
 
     segmentLengths[id] = segmentLength;
