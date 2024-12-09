@@ -522,7 +522,7 @@ async function run(){
 
     function undo() {
         console.log("undo");
-        //track.stroke.numInstances = track.allStrokes.length - 10;
+        stroke.dataSVG.length = stroke.dataSVG.length - 10;
         stroke.withdrawStroke();
     }
 
