@@ -35,7 +35,7 @@ export class Track {
 
     stroke: Stroke;
 
-    trackStep: number = 0.01;
+    trackStep: number = 0.005;
 
     // Store the path of the stroke to get polyline
     polyline: Stroke[] = [];

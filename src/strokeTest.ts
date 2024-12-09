@@ -449,7 +449,7 @@ async function run(){
         let paths = '';
         console.log(stroke.data);
         let count = 0;
-        stroke.data.forEach((stroke) => {
+        stroke.dataSVG.forEach((stroke) => {
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
@@ -600,7 +600,8 @@ async function run(){
     gui.add({ selectUndo: () => undo() }, 'selectUndo').name('Undo');
     
     function clearScreen() {
-        track.allStrokes = [];
+        // track.allStrokes = [];
+        stroke.dataSVG = [];
         stroke.cleanVertexBuffer();
     }
 

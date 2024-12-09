@@ -38,6 +38,7 @@ export class Stroke {
 
     // Store the preset data
     data: PresetData[] = [];
+    dataSVG: PresetData[] = [];
 
 
     constructor(device: GPUDevice, startPos: vec2, endPos: vec2) {
@@ -180,6 +181,13 @@ export class Stroke {
             radius: this.radius,
             strokeType: this.strokeType,
         });
+        this.dataSVG.push({
+            startPos: vec2.clone(startPos),
+            endPos: vec2.clone(endPos),
+            strokeColor: vec4.clone(this.strokeColor),
+            radius: this.radius,
+            strokeType: this.strokeType,
+        });
     }
     
     clearPresetData() {
@@ -225,6 +233,13 @@ export class Stroke {
             console.log('Preset strokes imported from JSON:', this.presetStrokes);
             this.updateVertexBufferWithPresetData();
             this.data = this.presetStrokes.map(stroke => ({
+                startPos: vec2.clone(stroke.startPos),
+                endPos: vec2.clone(stroke.endPos),
+                strokeColor: vec4.clone(stroke.strokeColor),
+                radius: stroke.radius,
+                strokeType: stroke.strokeType,
+            }));
+            this.dataSVG = this.presetStrokes.map(stroke => ({
                 startPos: vec2.clone(stroke.startPos),
                 endPos: vec2.clone(stroke.endPos),
                 strokeColor: vec4.clone(stroke.strokeColor),
@@ -277,6 +292,7 @@ export class Stroke {
         const vertsArraySize = constants.StrokeVertexSize * this.maxStrokes;
         const vertsArray = new Float32Array(vertsArraySize);
         device.queue.writeBuffer(this.vertexBuffer, 0, vertsArray);
+        this.dataSVG = [];
     }
 
     // withdraw the last stroke
