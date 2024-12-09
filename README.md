@@ -10,6 +10,7 @@ The project is based on the 2024 SIGGRAPH paper *Ciallo: GPU-Accelerated Renderi
 
 ## Demo Results
 
+![7faac30baebcdf1ddd23a289690f03e](https://github.com/user-attachments/assets/01050d73-b214-4b01-afcb-5366b62c99dd)
 
 
 
