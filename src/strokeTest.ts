@@ -619,18 +619,15 @@ async function run(){
         selectLoad: () => {
             const fileInput = document.createElement("input");
             fileInput.type = "file";
-            fileInput.accept = ".json"; // 限制只选择 JSON 文件
+            fileInput.accept = ".json"; 
             fileInput.onchange = (event) => {
                 const file = (event.target as HTMLInputElement).files?.[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = () => {
                         try {
-                            // 读取文件内容并解析为 JSON 对象
                             const jsonData = JSON.parse(reader.result as string);
-                            // 将 JSON 对象序列化为字符串（与 jsonString 格式一致）
                             const jsonString = JSON.stringify(jsonData);
-                            // 调用 readPresetData 方法
                             stroke.readPresetData(jsonString);
                             console.log("Loaded preset data:", jsonString);
                         } catch (error) {
@@ -644,9 +641,6 @@ async function run(){
         }
     }, "selectLoad").name("Load Files");
     
-    
-
-
     function frame() {
         // start draw
         strokeRenderer.draw()

@@ -141,7 +141,7 @@ export class Stroke {
 
 
     updateVertexBufferWithPresetData() {
-        if (this.presetStrokes.length === 0) {
+        if (this.presetStrokes.length == 0) {
             console.error('No preset strokes to update the vertex buffer with');
             return;
         }
