@@ -452,7 +452,7 @@ async function run(){
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
-            const radius = 600 * stroke.radius;
+            const radius = 900 * stroke.radius;
             let perpenDir = vec3.create();
             let dir = vec2.create();
             vec2.subtract(dir, endPixel, startPixel);
