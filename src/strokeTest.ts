@@ -453,7 +453,7 @@ async function run(){
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
-            const radius = 800 * stroke.radius;
+            const radius = 600 * stroke.radius;
             let perpenDir = vec3.create();
             let dir = vec2.create();
             vec2.subtract(dir, endPixel, startPixel);
@@ -462,14 +462,18 @@ async function run(){
             }
             vec2.normalize(dir, dir);
             vec3.cross(perpenDir, vec3.fromValues(dir[0], dir[1], 0), vec3.fromValues(0, 0, -1));   
+
+            if (stroke.strokeType == 3) {
+                stroke.strokeColor = vec4.fromValues(1, 1, 1, 0);
+            }
             
             let colorElement = '';
             if (stroke.strokeType == 2) {
                 colorElement += 
                 `
                 <radialGradient id="complexGradient${count}" cx="50%" cy="50%" r="50%">
-                    <stop offset="50%" stop-color="rgb(${stroke.strokeColor[0] * 256}, ${stroke.strokeColor[1] * 256}, ${stroke.strokeColor[2] * 256})" stop-opacity="0.01" />
-                    <stop offset="60%" stop-color="rgb(255, 255, 255)" stop-opacity="0" />
+                    <stop offset="90%" stop-color="rgb(${stroke.strokeColor[0] * 256}, ${stroke.strokeColor[1] * 256}, ${stroke.strokeColor[2] * 256})" stop-opacity="0.02" />
+                    <stop offset="100%" stop-color="rgb(255, 255, 255)" stop-opacity="0" />
                 </radialGradient>
                 `
             }
