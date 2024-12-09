@@ -1,6 +1,5 @@
 import basicVert from './shaders/basic.vert.wgsl?raw'
 import imageTexture from './shaders/imageTexture.frag.wgsl?raw'
-import * as cube from './util/cube'
 import { getMvpMatrix } from './util/math'
 
 // initialize webgpu device & config canvas context

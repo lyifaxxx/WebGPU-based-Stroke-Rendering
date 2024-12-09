@@ -92,18 +92,4 @@ fn main(
     }
 
     return currColor;
-
-    // let u = clamp((pLocal.x / len), 0.0, 1.0); // [0, 1]
-    // let v = clamp((pLocal.y / r0 + 1.0) * 0.5, 0.0, 1.0); // [0, 1]
-    // let uv = vec2<f32>(u, v);
-
-    // let rotatedUV = vec2<f32>(1.0 - uv.y, uv.x);
-    // var color = textureSample(strokeTexture, strokeSampler, uv);
-    // var outputColor = vec3(1.0, 1.0, 1.0) - color.rgb;
-    // outputColor *= strokeColor.rgb;
-    // if(strokeColor.r == 1.0 && strokeColor.g == 1.0 && strokeColor.b == 1.0){
-    //     return vec4<f32>(1.0, 1.0, 1.0, 1.0);
-    // }
-    // return vec4<f32>(outputColor.rgb, color.a);
-    // return vec4<f32>(1.0,0.0, 0.0, 1.0);
 }

@@ -447,9 +447,9 @@ async function run(){
         
         // Example SVG content using geometry (customize as needed)
         let paths = '';
-        console.log(track.allStrokes);
+        console.log(stroke.data);
         let count = 0;
-        track.allStrokes.forEach((stroke) => {
+        stroke.data.forEach((stroke) => {
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
@@ -468,7 +468,7 @@ async function run(){
                 colorElement += 
                 `
                 <radialGradient id="complexGradient${count}" cx="50%" cy="50%" r="50%">
-                    <stop offset="50%" stop-color="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" stop-opacity="0.01" />
+                    <stop offset="50%" stop-color="rgb(${stroke.strokeColor[0] * 256}, ${stroke.strokeColor[1] * 256}, ${stroke.strokeColor[2] * 256})" stop-opacity="0.01" />
                     <stop offset="60%" stop-color="rgb(255, 255, 255)" stop-opacity="0" />
                 </radialGradient>
                 `
@@ -490,7 +490,7 @@ async function run(){
             if (stroke.strokeType == 2) {
                 paths += `fill="url(#complexGradient${count})" /> `;
             } else {
-                paths += `fill="rgb(${stroke.displayColor[0] * 256}, ${stroke.displayColor[1] * 256}, ${stroke.displayColor[2] * 256})" fill-opacity="${1}" />`;
+                paths += `fill="rgb(${stroke.strokeColor[0] * 256}, ${stroke.strokeColor[1] * 256}, ${stroke.strokeColor[2] * 256})" fill-opacity="${1}" />`;
             }
 
             count += 1;
