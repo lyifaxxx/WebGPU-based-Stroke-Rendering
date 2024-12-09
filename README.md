@@ -10,6 +10,10 @@ The project is based on the 2024 SIGGRAPH paper *Ciallo: GPU-Accelerated Renderi
 
 ## Demo Results
 
+
+
+
+
 ## How to Run
 1. **Check WebGPU Compatibility:** Ensure your browser supports WebGPU.
 2. **Install Dependencies:** Run `npm install`.
@@ -78,6 +82,39 @@ Airbrush strokes resemble solid vanilla strokes but with a transparency gradient
 
 ---
 
+## User Interface
+Our application provides an intuitive and versatile user interface designed to cater to both novice and experienced digital artists. The following features are included to enhance usability and creative flexibility:
+
+### Stroke Customization:
+Change the color of your strokes to achieve the desired artistic effect.
+
+<div align="center">
+  <img src="/img/color.gif" alt="Eraser" width="40%">
+</div>
+
+Adjust the width of the stroke for varying line weights and styles.
+	
+### Custom Stamp Textures:
+Upload your own stamp texture maps to personalize and diversify your strokes.
+
+### Stroke Types:
+Choose from three stroke styles:
+Vanilla Stroke: Smooth, capsule-shaped strokes.
+Stamped Stroke: Texture-based strokes for dynamic and textured appearances.
+Airbrush Stroke: Soft strokes with transparency gradients for a traditional airbrushing effect.
+Use the eraser tool to correct or remove strokes effortlessly.
+
+<div align="center">
+  <img src="/img/eraser.gif" alt="Eraser" width="40%">
+</div>
+
+### Canvas Export and Import:
+Export your current canvas as an SVG graphic for vector editing or sharing.
+Save your work as a preset file, akin to a PSD file in Photoshop, and reload it later to continue working seamlessly.
+Editing Tools:
+Undo: Revert the most recent stroke for iterative editing.
+Clear Canvas: Reset the canvas to start anew.
+
 
 ## Progress
 [Pitch Slides](https://docs.google.com/presentation/d/1kdWUWK_J51V1OK4vAgOqVRj1v4jI2E21javRQpv6LB8/edit?usp=sharing)
@@ -85,6 +122,8 @@ Airbrush strokes resemble solid vanilla strokes but with a transparency gradient
 [Milestone 1 Slides](https://docs.google.com/presentation/d/1Zq7IuN5DZT85qdESfEUQTyffL5LvHAezVL_pzlStI3o/edit?usp=sharing)
 
 [Milestone 2 Slides](https://docs.google.com/presentation/d/1T2Zvy6Y7YE-2VomaqhQ14VG_lq6AovSEm9_g_u48H_o/edit?usp=sharing)
+
+[Milestone 3 Slides](https://docs.google.com/presentation/d/1iS7UCDXDNgcz1sXsQtlMUnTq7uBP9yh2huFh2rZW6gE/edit?usp=sharing)
 
 ## Credits
 [Orillusion](https://github.com/Orillusion/orillusion-webgpu-samples)
