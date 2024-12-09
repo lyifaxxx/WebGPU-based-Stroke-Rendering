@@ -522,6 +522,7 @@ async function run(){
     function undo() {
         console.log("undo");
         stroke.dataSVG.length = stroke.dataSVG.length - 10;
+        stroke.data.length = stroke.data.length - 10;
         stroke.withdrawStroke();
     }
 
