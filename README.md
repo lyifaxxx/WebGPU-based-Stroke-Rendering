@@ -97,6 +97,10 @@ Adjust the width of the stroke for varying line weights and styles.
 ### Custom Stamp Textures:
 Upload your own stamp texture maps to personalize and diversify your strokes.
 
+<div align="center">
+  <img src="/img/stampDrawing.png" alt="Eraser" width="40%">
+</div>
+
 ### Stroke Types:
 Choose from three stroke styles:
 Vanilla Stroke: Smooth, capsule-shaped strokes.
@@ -116,6 +120,7 @@ Undo: Revert the most recent stroke for iterative editing.
 Clear Canvas: Reset the canvas to start anew.
 
 
+
 ## Progress
 [Pitch Slides](https://docs.google.com/presentation/d/1kdWUWK_J51V1OK4vAgOqVRj1v4jI2E21javRQpv6LB8/edit?usp=sharing)
 
@@ -124,6 +129,8 @@ Clear Canvas: Reset the canvas to start anew.
 [Milestone 2 Slides](https://docs.google.com/presentation/d/1T2Zvy6Y7YE-2VomaqhQ14VG_lq6AovSEm9_g_u48H_o/edit?usp=sharing)
 
 [Milestone 3 Slides](https://docs.google.com/presentation/d/1iS7UCDXDNgcz1sXsQtlMUnTq7uBP9yh2huFh2rZW6gE/edit?usp=sharing)
+
+[Final Presentation](https://docs.google.com/presentation/d/1BrkmwjLcdG8tAqLP2hD5TFzPcPwqkVRE6TNPsfQU8TM/edit?usp=sharing)
 
 ## Credits
 [Orillusion](https://github.com/Orillusion/orillusion-webgpu-samples)
