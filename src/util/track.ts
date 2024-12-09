@@ -4,21 +4,6 @@ import { Stroke } from "./stroke";
 import { StrokeRenderer } from '../strokeTest';
 import { vec4 } from "gl-matrix";
 
-export enum StrokeType {
-    vanilla = 0,
-    stamp = 1,
-    airbrush = 2,
-    eraser = 3,
-}
-
-interface PresetData {
-    startPos: vec2;
-    endPos: vec2;
-    strokeColor: vec4;
-    radius: number;
-    strokeType: StrokeType;
-}
-
 // This class is used to track mouse position and create vertex data
 export class Track {
     keys: { [key: string]: boolean } = {};
@@ -130,8 +115,6 @@ export class Track {
         }
         canvas.style.cursor = 'default';
         
-        // Do polyline Computation
-        this.strokeRenderer.computeCumulativeLengths(this.polyline);
     }
 
     onFrame() {

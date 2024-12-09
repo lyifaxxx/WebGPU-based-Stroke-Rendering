@@ -8,7 +8,6 @@ import { Stroke } from './util/stroke'
 import { Track } from './util/track'
 import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import * as renderer from './renderer';
-import presetFile from "../paths.json";
 import textureUrl from '../stamp1.png'
 
 export class StrokeRenderer extends renderer.Renderer {
@@ -30,7 +29,7 @@ export class StrokeRenderer extends renderer.Renderer {
 
         this.cumulativeLengthsBuffer = renderer.device.createBuffer({
             size: Float32Array.BYTES_PER_ELEMENT * renderer.constants.MaxNumVert,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, // store the value of cumulative lengths in compute shader
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC| GPUBufferUsage.COPY_DST,// store the value of cumulative lengths in compute shader
         });
         renderer.device.queue.writeBuffer(this.cumulativeLengthsBuffer, 0, new Float32Array(renderer.constants.MaxNumVert).fill(0));
         
@@ -615,9 +614,38 @@ async function run(){
     // download the preset data
     gui.add({ selectDownload: () => stroke.exportPresetData() }, 'selectDownload').name('Download Data');
 
-    // load the preset data
-    const jsonString = JSON.stringify(presetFile);
-    gui.add({ selectLoad: () => stroke.readPresetData(jsonString) }, 'selectLoad').name('Load Data');
+    // load from files
+    gui.add({
+        selectLoad: () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = ".json"; // 限制只选择 JSON 文件
+            fileInput.onchange = (event) => {
+                const file = (event.target as HTMLInputElement).files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            // 读取文件内容并解析为 JSON 对象
+                            const jsonData = JSON.parse(reader.result as string);
+                            // 将 JSON 对象序列化为字符串（与 jsonString 格式一致）
+                            const jsonString = JSON.stringify(jsonData);
+                            // 调用 readPresetData 方法
+                            stroke.readPresetData(jsonString);
+                            console.log("Loaded preset data:", jsonString);
+                        } catch (error) {
+                            console.error("Error parsing or loading JSON file:", error);
+                        }
+                    };
+                    reader.readAsText(file); 
+                }
+            };
+            fileInput.click(); 
+        }
+    }, "selectLoad").name("Load Files");
+    
+    
+
 
     function frame() {
         // start draw

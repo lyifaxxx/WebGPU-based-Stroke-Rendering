@@ -11,18 +11,21 @@ struct StrokeData {
 
 const EquiDistance: i32 = 0;
 const RatioDistance: i32 = 1;
+// Shared memory for prefix sum
+var<workgroup> segmentLengths: array<f32, 500>;
 
-@workgroup_size(32, 32, 1) // Adjust workgroup size (x, y, z)
+@compute @workgroup_size(32,32,1) // Adjust workgroup size (x, y, z)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let id: u32 = global_id.x; // For 1D workgroup, using x component for indexing
-    var p0: vec2<f32> = position[id];
+    let idx = global_id.x;
+    let id: u32 = idx; // For 1D workgroup, using x component for indexing
+    var p0: vec2<f32> = strokes[id].positions.xy;
     var p1: vec2<f32>;
 
     // Use if statement instead of ternary operator
     if (id == 0) {
         p1 = p0;  // If it's the first element, set p1 to p0
     } else {
-        p1 = position[id - 1]; // Otherwise, set p1 to the previous element
+        p1 = strokes[id-1].positions.xy;
     }
     
     // length of each segment
@@ -30,12 +33,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     
     var segmentLength: f32 = 0.0;
     
+    var stampMode: i32 = i32(strokes[id].strokeType);
+    let uniRadius: f32 = strokes[id].strokeWidth / 2.0;
+    // let thicknessOffset: array<f32, 5000> = array<f32, 5000>(0.0);
+
     if (stampMode == EquiDistance) {
         segmentLength = L / (uniRadius * 2.0);
     } else if (stampMode == RatioDistance) {
-        var t2: f32 = 2.0 * (uniRadius + thicknessOffset[id]);
+        var t2: f32 = 2.0 * (uniRadius);
         var t1: f32;
-        if (id == 0) { t1 = t2;} else { t1 = 2.0 * (uniRadius + thicknessOffset[id - 1]); }; 
+        if (id == 0) { t1 = t2;} else { t1 = 2.0 * uniRadius; } 
         
         var stretchedL: f32 = 0.0;
         const tolerance: f32 = 1e-5;
@@ -58,17 +65,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         segmentLength = stretchedL;
     }
     
-    // Shared memory for prefix sum
-    shared var<workgroup> segmentLengths: array<f32,5000>;
-
-
     segmentLengths[id] = segmentLength;
 
     // Ensure all threads in the workgroup have written their values to shared memory
     workgroupBarrier();
 
     // Prefix sum (scan) on segment lengths
-    let n_steps: u32 = u32(log2(f32(workgroup_size_x))) + 1;
+    let n_steps: u32 = u32(log2(f32(32))) + 1;
 
     for (var s: u32 = 0u; s < n_steps; s = s + 1u) {
         var mask: u32 = (1u << s) - 1u;
@@ -82,7 +85,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         // Ensure all threads within the workgroup synchronize after each iteration
         workgroupBarrier();
     }
-    
+
     // Store the final result in the output buffer
-    lengthOutput[id] = segmentLengths[id];
+    cumulativeLengths[id] = segmentLengths[id];
 }
