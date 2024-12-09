@@ -630,7 +630,6 @@ async function run(){
                             const jsonData = JSON.parse(reader.result as string);
                             const jsonString = JSON.stringify(jsonData);
                             stroke.readPresetData(jsonString);
-                            console.log("Loaded preset data:", jsonString);
                         } catch (error) {
                             console.error("Error parsing or loading JSON file:", error);
                         }

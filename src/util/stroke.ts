@@ -153,7 +153,7 @@ export class Stroke {
         const vertsArray = new Float32Array(vertsArraySize * this.presetStrokes.length);
     
         this.presetStrokes.forEach((stroke, i) => {
-            console.log('index and stroke:', i, stroke);
+            // console.log('index and stroke:', i, stroke);
             const offset = i * 12;
             vertsArray[offset + 0] = stroke.startPos[0];
             vertsArray[offset + 1] = stroke.startPos[1];
@@ -196,17 +196,29 @@ export class Stroke {
     
     // Export the paths to a JSON file
     exportPresetData() {
-        const jsonData = JSON.stringify(this.data);
-        // Download the preset data
+        const round = (value: number) => parseFloat(value.toFixed(3));
+        const simplifiedData = this.data.map(d => ({
+            startPos: [round(d.startPos[0]), round(d.startPos[1])],
+            endPos: [round(d.endPos[0]), round(d.endPos[1])],
+            strokeColor: [
+                round(d.strokeColor[0]),
+                round(d.strokeColor[1]),
+                round(d.strokeColor[2]),
+                round(d.strokeColor[3])
+            ],
+            radius: round(d.radius),
+            strokeType: d.strokeType,
+        }));
+    
+        const jsonData = JSON.stringify(simplifiedData);
         const blob = new Blob([jsonData], { type: 'application/json' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'paths.json';
+        link.download = 'preset.json';
         link.click();
-        console.log('Paths exported to paths.json');
-        //clean the data
         this.clearPresetData();
     }
+    
 
     // Read the preset data from a JSON file
     presetStrokes: Stroke[] = [];
