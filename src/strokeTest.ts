@@ -518,7 +518,7 @@ async function run(){
 
     function undo() {
         console.log("undo");
-        track.allStrokes.length = track.allStrokes.length - 10;
+        //track.stroke.numInstances = track.allStrokes.length - 10;
         stroke.withdrawStroke();
     }
 
