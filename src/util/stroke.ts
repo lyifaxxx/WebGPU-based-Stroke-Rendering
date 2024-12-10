@@ -216,7 +216,7 @@ export class Stroke {
         link.href = URL.createObjectURL(blob);
         link.download = 'preset.json';
         link.click();
-        this.clearPresetData();
+        // this.clearPresetData();
     }
     
 
@@ -310,6 +310,14 @@ export class Stroke {
     // withdraw the last stroke
     withdrawStroke() {
         if(this.numInstances === 0) {
+            return;
+        }
+        this.numInstances -= 10;
+        this.numInstances = Math.max(0, this.numInstances);
+        //Math.min(10,Math.max(10, this.numInstances));
+        console.log('numInstances:', this.numInstances);
+        device.queue.writeBuffer(this.indirectBuffer, 4, new Uint32Array([this.numInstances]));
+       /*  if(this.numInstances === 0) {
             this.cleanVertexBufferByIndex(0);
             return;
         }
@@ -319,6 +327,6 @@ export class Stroke {
             this.numInstances = 0;
             this.cleanVertexBufferByIndex(0);
         }
-        this.updateVertexBuffer();
+        this.updateVertexBuffer(); */
     }
 }

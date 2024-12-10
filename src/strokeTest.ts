@@ -9,6 +9,7 @@ import { Track } from './util/track'
 import { mat4, vec2, vec3, vec4 } from "gl-matrix";
 import * as renderer from './renderer';
 import textureUrl from '../stamp1.png'
+import texture from '../texture.svg'
 
 export class StrokeRenderer extends renderer.Renderer {
     pipeline: GPURenderPipeline;
@@ -452,7 +453,7 @@ async function run(){
             let startPixel = NDCToPixel(stroke.startPos);
             let endPixel = NDCToPixel(stroke.endPos);
 
-            const radius = 900 * stroke.radius;
+            const radius = 600 * stroke.radius;
             let perpenDir = vec3.create();
             let dir = vec2.create();
             vec2.subtract(dir, endPixel, startPixel);
@@ -521,8 +522,8 @@ async function run(){
 
     function undo() {
         console.log("undo");
-        stroke.dataSVG.length = stroke.dataSVG.length - 10;
-        stroke.data.length = stroke.data.length - 10;
+        stroke.dataSVG.length = Math.max(0,stroke.dataSVG.length - 10);
+        stroke.data.length =  Math.max(1,stroke.data.length - 10);
         stroke.withdrawStroke();
     }
 
@@ -606,6 +607,7 @@ async function run(){
     function clearScreen() {
         // track.allStrokes = [];
         stroke.dataSVG = [];
+        stroke.data = [];
         stroke.cleanVertexBuffer();
     }
 
